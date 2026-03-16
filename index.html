@@ -539,25 +539,96 @@ body::after {
 // CARD DATA
 // ─────────────────────────────────────────────
 
-// When download-assets.js has been run, images are served from ./assets/images/
-// Otherwise they fall back to Wikimedia Commons CDN.
 const LOCAL_IMAGES_BASE = './assets/images';
 const WIKIMEDIA = 'https://upload.wikimedia.org/wikipedia/commons';
 
-// Detect if local assets are bundled (set by download-assets.js via a sentinel file)
-// We try a lightweight HEAD request; if it fails we stay on CDN.
-let USE_LOCAL_ASSETS = false;
-(function detectLocalAssets() {
-  const probe = new XMLHttpRequest();
-  probe.open('HEAD', LOCAL_IMAGES_BASE + '/.bundled', false /* sync, before any card draw */);
-  try { probe.send(); USE_LOCAL_ASSETS = (probe.status === 200); } catch (_) {}
-})();
-
+// Always use local assets (populated by download-assets.js).
+// onerror falls back to CDN_IMAGES if a local file is missing.
 function imgUrl(wikimediaPath, localFile) {
-  return USE_LOCAL_ASSETS
-    ? `${LOCAL_IMAGES_BASE}/${localFile}`
-    : `${WIKIMEDIA}/${wikimediaPath}`;
+  return `${LOCAL_IMAGES_BASE}/${localFile}`;
 }
+
+// CDN fallback URLs used when local assets aren't present
+const CDN_IMAGES = {
+  'The Fool':            `${WIKIMEDIA}/9/90/RWS_Tarot_00_Fool.jpg`,
+  'The Magician':        `${WIKIMEDIA}/d/de/RWS_Tarot_01_Magician.jpg`,
+  'The High Priestess':  `${WIKIMEDIA}/8/88/RWS_Tarot_02_High_Priestess.jpg`,
+  'The Empress':         `${WIKIMEDIA}/d/d2/RWS_Tarot_03_Empress.jpg`,
+  'The Emperor':         `${WIKIMEDIA}/c/c3/RWS_Tarot_04_Emperor.jpg`,
+  'The Hierophant':      `${WIKIMEDIA}/8/8d/RWS_Tarot_05_Hierophant.jpg`,
+  'The Lovers':          `${WIKIMEDIA}/d/db/RWS_Tarot_06_Lovers.jpg`,
+  'The Chariot':         `${WIKIMEDIA}/9/9b/RWS_Tarot_07_Chariot.jpg`,
+  'Strength':            `${WIKIMEDIA}/f/f5/RWS_Tarot_08_Strength.jpg`,
+  'The Hermit':          `${WIKIMEDIA}/4/4d/RWS_Tarot_09_Hermit.jpg`,
+  'Wheel of Fortune':    `${WIKIMEDIA}/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg`,
+  'Justice':             `${WIKIMEDIA}/e/e0/RWS_Tarot_11_Justice.jpg`,
+  'The Hanged Man':      `${WIKIMEDIA}/2/2b/RWS_Tarot_12_Hanged_Man.jpg`,
+  'Death':               `${WIKIMEDIA}/d/d7/RWS_Tarot_13_Death.jpg`,
+  'Temperance':          `${WIKIMEDIA}/f/f8/RWS_Tarot_14_Temperance.jpg`,
+  'The Devil':           `${WIKIMEDIA}/5/55/RWS_Tarot_15_Devil.jpg`,
+  'The Tower':           `${WIKIMEDIA}/5/53/RWS_Tarot_16_Tower.jpg`,
+  'The Star':            `${WIKIMEDIA}/d/db/RWS_Tarot_17_Star.jpg`,
+  'The Moon':            `${WIKIMEDIA}/7/7f/RWS_Tarot_18_Moon.jpg`,
+  'The Sun':             `${WIKIMEDIA}/1/17/RWS_Tarot_19_Sun.jpg`,
+  'Judgement':           `${WIKIMEDIA}/d/dd/RWS_Tarot_20_Judgement.jpg`,
+  'The World':           `${WIKIMEDIA}/f/ff/RWS_Tarot_21_World.jpg`,
+  'Ace of Wands':        `${WIKIMEDIA}/1/11/Wands01.jpg`,
+  'Two of Wands':        `${WIKIMEDIA}/0/0f/Wands02.jpg`,
+  'Three of Wands':      `${WIKIMEDIA}/f/ff/Wands03.jpg`,
+  'Four of Wands':       `${WIKIMEDIA}/a/a4/Wands04.jpg`,
+  'Five of Wands':       `${WIKIMEDIA}/9/9d/Wands05.jpg`,
+  'Six of Wands':        `${WIKIMEDIA}/3/3b/Wands06.jpg`,
+  'Seven of Wands':      `${WIKIMEDIA}/e/e4/Wands07.jpg`,
+  'Eight of Wands':      `${WIKIMEDIA}/6/6b/Wands08.jpg`,
+  'Nine of Wands':       `${WIKIMEDIA}/4/4d/Tarot_Nine_of_Wands.jpg`,
+  'Ten of Wands':        `${WIKIMEDIA}/0/0b/Wands10.jpg`,
+  'Page of Wands':       `${WIKIMEDIA}/6/6a/Wands11.jpg`,
+  'Knight of Wands':     `${WIKIMEDIA}/1/16/Wands12.jpg`,
+  'Queen of Wands':      `${WIKIMEDIA}/0/0d/Wands13.jpg`,
+  'King of Wands':       `${WIKIMEDIA}/c/ce/Wands14.jpg`,
+  'Ace of Cups':         `${WIKIMEDIA}/3/36/Cups01.jpg`,
+  'Two of Cups':         `${WIKIMEDIA}/f/f8/Cups02.jpg`,
+  'Three of Cups':       `${WIKIMEDIA}/7/7a/Cups03.jpg`,
+  'Four of Cups':        `${WIKIMEDIA}/3/35/Cups04.jpg`,
+  'Five of Cups':        `${WIKIMEDIA}/d/d7/Cups05.jpg`,
+  'Six of Cups':         `${WIKIMEDIA}/1/17/Cups06.jpg`,
+  'Seven of Cups':       `${WIKIMEDIA}/a/ae/Cups07.jpg`,
+  'Eight of Cups':       `${WIKIMEDIA}/6/60/Cups08.jpg`,
+  'Nine of Cups':        `${WIKIMEDIA}/2/24/Cups09.jpg`,
+  'Ten of Cups':         `${WIKIMEDIA}/8/84/Cups10.jpg`,
+  'Page of Cups':        `${WIKIMEDIA}/a/ad/Cups11.jpg`,
+  'Knight of Cups':      `${WIKIMEDIA}/f/fa/Cups12.jpg`,
+  'Queen of Cups':       `${WIKIMEDIA}/6/62/Cups13.jpg`,
+  'King of Cups':        `${WIKIMEDIA}/0/04/Cups14.jpg`,
+  'Ace of Swords':       `${WIKIMEDIA}/1/1a/Swords01.jpg`,
+  'Two of Swords':       `${WIKIMEDIA}/9/9e/Swords02.jpg`,
+  'Three of Swords':     `${WIKIMEDIA}/0/02/Swords03.jpg`,
+  'Four of Swords':      `${WIKIMEDIA}/b/bf/Swords04.jpg`,
+  'Five of Swords':      `${WIKIMEDIA}/2/23/Swords05.jpg`,
+  'Six of Swords':       `${WIKIMEDIA}/2/29/Swords06.jpg`,
+  'Seven of Swords':     `${WIKIMEDIA}/3/34/Swords07.jpg`,
+  'Eight of Swords':     `${WIKIMEDIA}/a/a7/Swords08.jpg`,
+  'Nine of Swords':      `${WIKIMEDIA}/2/2f/Swords09.jpg`,
+  'Ten of Swords':       `${WIKIMEDIA}/d/d4/Swords10.jpg`,
+  'Page of Swords':      `${WIKIMEDIA}/4/4c/Swords11.jpg`,
+  'Knight of Swords':    `${WIKIMEDIA}/b/b0/Swords12.jpg`,
+  'Queen of Swords':     `${WIKIMEDIA}/d/d4/Swords13.jpg`,
+  'King of Swords':      `${WIKIMEDIA}/3/33/Swords14.jpg`,
+  'Ace of Pentacles':    `${WIKIMEDIA}/f/fd/Pents01.jpg`,
+  'Two of Pentacles':    `${WIKIMEDIA}/9/9f/Pents02.jpg`,
+  'Three of Pentacles':  `${WIKIMEDIA}/4/42/Pents03.jpg`,
+  'Four of Pentacles':   `${WIKIMEDIA}/3/35/Pents04.jpg`,
+  'Five of Pentacles':   `${WIKIMEDIA}/9/96/Pents05.jpg`,
+  'Six of Pentacles':    `${WIKIMEDIA}/a/a6/Pents06.jpg`,
+  'Seven of Pentacles':  `${WIKIMEDIA}/6/6a/Pents07.jpg`,
+  'Eight of Pentacles':  `${WIKIMEDIA}/4/49/Pents08.jpg`,
+  'Nine of Pentacles':   `${WIKIMEDIA}/f/f0/Pents09.jpg`,
+  'Ten of Pentacles':    `${WIKIMEDIA}/4/42/Pents10.jpg`,
+  'Page of Pentacles':   `${WIKIMEDIA}/e/ec/Pents11.jpg`,
+  'Knight of Pentacles': `${WIKIMEDIA}/d/d5/Pents12.jpg`,
+  'Queen of Pentacles':  `${WIKIMEDIA}/8/88/Pents13.jpg`,
+  'King of Pentacles':   `${WIKIMEDIA}/1/1c/Pents14.jpg`,
+};
 
 // All 78 Rider-Waite-Smith card images (public domain, from Wikimedia Commons)
 // imgUrl(wikimediaPath, localFilename) — uses local asset if download-assets.js was run
@@ -811,7 +882,13 @@ function drawCard() {
     btn.textContent = 'Draw Again';
   };
   img.onerror = () => {
-    // Image failed (likely CORS/blocked) — render card without image, show symbol fallback
+    // Local asset missing — try Wikimedia CDN as fallback
+    if (!img.src.includes('wikimedia.org') && CDN_IMAGES[name]) {
+      img.crossOrigin = 'anonymous';
+      img.src = CDN_IMAGES[name];
+      return;
+    }
+    // CDN also failed — render symbol fallback card
     skeleton.remove();
     renderCard(name, reversed, suit, color, suitClass, null);
     btn.disabled = false;
