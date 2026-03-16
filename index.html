@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0d0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tarot">
+<meta name="description" content="78-card Rider-Waite-Smith tarot deck with full meanings">
+<title>Tarot · The Oracle's Table</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0c0a12;
+  --bg2: #13101e;
+  --bg3: #1a1628;
+  --gold: #c9a84c;
+  --gold-dim: #7a6630;
+  --text: #e8dfc8;
+  --text2: #a09880;
+  --text3: #5a5248;
+  --border: #2a2438;
+  --border2: #3a3248;
+  --radius: 10px;
+  /* Card aspect ratio: ~1.74 (standard tarot) */
+  --card-w: min(52vw, 200px);
+  --card-h: calc(var(--card-w) * 1.74);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Ambient background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 100% 55% at 50% -5%, #1e1538 0%, transparent 65%),
+    radial-gradient(ellipse 70% 45% at 85% 90%, #0e0a1a 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── APP SHELL ── */
+.app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Safe areas for notched phones */
+  padding: env(safe-area-inset-top, 0) 0 0;
+}
+
+/* ── HEADER ── */
+.header {
+  width: 100%;
+  text-align: center;
+  padding: 28px 24px 20px;
+  flex-shrink: 0;
+}
+.header-eyebrow {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.5em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.header h1 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(22px, 6vw, 30px);
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0.1em;
+  line-height: 1;
+}
+.header-sub {
+  margin-top: 7px;
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 0.12em;
+  font-style: italic;
+}
+
+/* ── CARD STAGE ── fills remaining vertical space ── */
+.card-stage {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+}
+
+.card-placeholder {
+  width: var(--card-w);
+  height: var(--card-h);
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--border2);
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.card-wrap {
+  width: var(--card-w);
+  position: relative;
+  cursor: pointer;
+  border-radius: var(--radius);
+  /* Active state feedback for touch */
+  transition: transform 0.15s ease;
+}
+.card-wrap:active { transform: scale(0.97); }
+.card-wrap.reversed:active { transform: rotate(180deg) scale(0.97); }
+
+.card-wrap.reversed { transform: rotate(180deg); }
+
+.card-wrap.animating {
+  animation: cardReveal 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes cardReveal {
+  from { opacity: 0; transform: scale(0.86) translateY(14px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.card-wrap.reversed.animating {
+  animation: cardRevealRev 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes cardRevealRev {
+  from { opacity: 0; transform: rotate(180deg) scale(0.86) translateY(14px); }
+  to   { opacity: 1; transform: rotate(180deg) scale(1) translateY(0); }
+}
+
+.card-img {
+  width: 100%;
+  display: block;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+}
+.card-img.loaded {
+  box-shadow: 0 16px 56px rgba(0,0,0,0.75);
+}
+
+.card-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: calc(var(--radius) + 1px);
+  border: 1px solid var(--gold);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.card-wrap:hover .card-glow { opacity: 0.35; }
+
+.tap-hint {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 24px 0 10px;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(201,168,76,0.55);
+  background: linear-gradient(transparent, rgba(13,10,20,0.88));
+  border-radius: 0 0 var(--radius) var(--radius);
+  pointer-events: none;
+}
+.card-wrap.reversed .tap-hint {
+  bottom: auto; top: 0;
+  transform: rotate(180deg);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+/* ── CARD LABEL ── */
+.card-label {
+  flex-shrink: 0;
+  width: 100%;
+  text-align: center;
+  padding: 10px 24px 4px;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.4s ease 0.2s, transform 0.4s ease 0.2s;
+}
+.card-label.visible { opacity: 1; transform: none; }
+
+.card-label-name {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 4.5vw, 20px);
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0.05em;
+}
+.card-label-sub {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* ── DRAW BUTTON ── full-width, thumb-friendly ── */
+.btn-row {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 16px 24px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+.draw-btn {
+  width: 100%;
+  padding: 18px 24px;
+  background: rgba(201,168,76,0.09);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.2s;
+  -webkit-appearance: none;
+  /* Min touch target */
+  min-height: 56px;
+}
+.draw-btn:hover  { background: rgba(201,168,76,0.16); }
+.draw-btn:active { background: rgba(201,168,76,0.24); }
+.draw-btn:disabled {
+  color: var(--gold-dim);
+  background: rgba(201,168,76,0.04);
+  cursor: default;
+}
+
+/* ── SKELETON ── */
+.card-img-skeleton {
+  width: var(--card-w);
+  height: var(--card-h);
+  border-radius: var(--radius);
+  background: linear-gradient(110deg, var(--bg2) 30%, var(--bg3) 50%, var(--bg2) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  border: 1px solid var(--border);
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── MEANING PANEL (bottom sheet) ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(5,3,10,0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s;
+}
+.overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.panel {
+  width: 100%;
+  max-width: 480px;
+  /* Max height respects safe area */
+  max-height: calc(90dvh - env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(160deg, #1c1828 0%, #110e1c 100%);
+  border: 1px solid rgba(201,168,76,0.22);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.38s cubic-bezier(0.22,1,0.36,1);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.overlay.open .panel { transform: translateY(0); }
+
+.panel-handle {
+  width: 40px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 14px auto 0;
+}
+
+.panel-inner { padding: 22px 20px 0; }
+
+.panel-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.panel-card-img {
+  width: 80px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(201,168,76,0.28);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  display: block;
+}
+.panel-card-img.reversed-img { transform: rotate(180deg); }
+
+.panel-card-info {
+  flex: 1;
+  padding-top: 2px;
+  min-width: 0; /* prevent overflow */
+}
+
+.panel-name {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(16px, 4.5vw, 20px);
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  margin-bottom: 5px;
+}
+.panel-orientation {
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.panel-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.keyword {
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+}
+
+.panel-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.18), transparent);
+  margin: 0 20px 20px;
+}
+
+.panel-meaning {
+  padding: 0 20px;
+  font-size: clamp(14px, 3.8vw, 16px);
+  line-height: 1.78;
+  color: var(--text2);
+  margin-bottom: 18px;
+}
+
+.panel-advice {
+  padding: 15px 18px;
+  margin: 0 20px;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.018);
+}
+.advice-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.advice-text {
+  font-size: clamp(13px, 3.5vw, 15px);
+  line-height: 1.65;
+  color: var(--text3);
+  font-style: italic;
+}
+
+/* ── INSTALL BANNER ── */
+.install-banner {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 90;
+  background: var(--bg3);
+  border-top: 1px solid var(--border2);
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text2);
+  transform: translateY(100%);
+  transition: transform 0.3s;
+}
+.install-banner.visible { transform: translateY(0); }
+.install-btn {
+  margin-left: auto;
+  padding: 9px 20px;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: 2px;
+  min-height: 44px;
+}
+.dismiss-btn {
+  background: none; border: none;
+  color: var(--text3);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── DESKTOP UPGRADES ── */
+@media (min-width: 520px) {
+  :root {
+    --card-w: 200px;
+  }
+  .header { padding: 40px 32px 24px; }
+  .header h1 { font-size: 28px; }
+  .btn-row { padding: 20px 32px 40px; }
+  .draw-btn { padding: 16px 24px; font-size: 11px; }
+  .panel {
+    border-bottom: 1px solid rgba(201,168,76,0.22);
+    border-radius: 16px;
+    margin-bottom: 40px;
+    max-height: 80dvh;
+  }
+  .overlay { align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header class="header">
+    <div class="header-eyebrow">✦ The Oracle's Table ✦</div>
+    <h1>Tarot</h1>
+    <p class="header-sub">78 cards · Rider-Waite-Smith</p>
+  </header>
+
+  <div class="card-stage" id="cardStage">
+    <div class="card-placeholder" id="placeholder">Draw a card</div>
+  </div>
+
+  <div class="card-label" id="cardLabel">
+    <div class="card-label-name" id="labelName"></div>
+    <div class="card-label-sub" id="labelSub"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="draw-btn" id="drawBtn" onclick="drawCard()">Draw Card</button>
+  </div>
+</div>
+
+<!-- Meaning panel -->
+<div class="overlay" id="overlay" onclick="closePanel(event)">
+  <div class="panel" id="panel">
+    <div class="panel-handle"></div>
+    <div class="panel-inner">
+      <div class="panel-header" id="panelHeader"></div>
+    </div>
+    <div class="panel-divider"></div>
+    <p class="panel-meaning" id="panelMeaning"></p>
+    <div class="panel-advice" id="panelAdvice">
+      <div class="advice-label" id="adviceLabel"></div>
+      <p class="advice-text" id="adviceText"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Install banner -->
+<div class="install-banner" id="installBanner">
+  <span>Add to Home Screen for offline use</span>
+  <button class="install-btn" id="installBtn">Install</button>
+  <button class="dismiss-btn" onclick="dismissInstall()">×</button>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CARD DATA
+// ─────────────────────────────────────────────
+
+const WIKIMEDIA = 'https://upload.wikimedia.org/wikipedia/commons';
+
+// All 78 Wikimedia Commons RWS image URLs (public domain)
+const IMAGES = {
+  'The Fool':            `${WIKIMEDIA}/9/90/RWS_Tarot_00_Fool.jpg`,
+  'The Magician':        `${WIKIMEDIA}/d/de/RWS_Tarot_01_Magician.jpg`,
+  'The High Priestess':  `${WIKIMEDIA}/8/88/RWS_Tarot_02_High_Priestess.jpg`,
+  'The Empress':         `${WIKIMEDIA}/d/d2/RWS_Tarot_03_Empress.jpg`,
+  'The Emperor':         `${WIKIMEDIA}/c/c3/RWS_Tarot_04_Emperor.jpg`,
+  'The Hierophant':      `${WIKIMEDIA}/8/8d/RWS_Tarot_05_Hierophant.jpg`,
+  'The Lovers':          `${WIKIMEDIA}/3/3a/TheLovers.jpg`,
+  'The Chariot':         `${WIKIMEDIA}/9/9b/RWS_Tarot_07_Chariot.jpg`,
+  'Strength':            `${WIKIMEDIA}/f/f5/RWS_Tarot_08_Strength.jpg`,
+  'The Hermit':          `${WIKIMEDIA}/4/4d/RWS_Tarot_09_Hermit.jpg`,
+  'Wheel of Fortune':    `${WIKIMEDIA}/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg`,
+  'Justice':             `${WIKIMEDIA}/e/e0/RWS_Tarot_11_Justice.jpg`,
+  'The Hanged Man':      `${WIKIMEDIA}/2/2b/RWS_Tarot_12_Hanged_Man.jpg`,
+  'Death':               `${WIKIMEDIA}/d/d7/RWS_Tarot_13_Death.jpg`,
+  'Temperance':          `${WIKIMEDIA}/f/f8/RWS_Tarot_14_Temperance.jpg`,
+  'The Devil':           `${WIKIMEDIA}/5/55/RWS_Tarot_15_Devil.jpg`,
+  'The Tower':           `${WIKIMEDIA}/5/53/RWS_Tarot_16_Tower.jpg`,
+  'The Star':            `${WIKIMEDIA}/d/db/RWS_Tarot_17_Star.jpg`,
+  'The Moon':            `${WIKIMEDIA}/7/7f/RWS_Tarot_18_Moon.jpg`,
+  'The Sun':             `${WIKIMEDIA}/1/17/RWS_Tarot_19_Sun.jpg`,
+  'Judgement':           `${WIKIMEDIA}/d/dd/RWS_Tarot_20_Judgement.jpg`,
+  'The World':           `${WIKIMEDIA}/f/ff/RWS_Tarot_21_World.jpg`,
+  // Wands
+  'Ace of Wands':        `${WIKIMEDIA}/1/11/Wands01.jpg`,
+  'Two of Wands':        `${WIKIMEDIA}/0/0f/Wands02.jpg`,
+  'Three of Wands':      `${WIKIMEDIA}/f/ff/Wands03.jpg`,
+  'Four of Wands':       `${WIKIMEDIA}/a/a4/Wands04.jpg`,
+  'Five of Wands':       `${WIKIMEDIA}/9/9d/Wands05.jpg`,
+  'Six of Wands':        `${WIKIMEDIA}/3/3b/Wands06.jpg`,
+  'Seven of Wands':      `${WIKIMEDIA}/e/e4/Wands07.jpg`,
+  'Eight of Wands':      `${WIKIMEDIA}/6/6b/Wands08.jpg`,
+  'Nine of Wands':       `${WIKIMEDIA}/4/4d/Tarot_Nine_of_Wands.jpg`,
+  'Ten of Wands':        `${WIKIMEDIA}/0/0b/Wands10.jpg`,
+  'Page of Wands':       `${WIKIMEDIA}/6/6a/Wands11.jpg`,
+  'Knight of Wands':     `${WIKIMEDIA}/1/16/Wands12.jpg`,
+  'Queen of Wands':      `${WIKIMEDIA}/b/b0/Wands13.jpg`,
+  'King of Wands':       `${WIKIMEDIA}/c/ce/Wands14.jpg`,
+  // Cups
+  'Ace of Cups':         `${WIKIMEDIA}/3/36/Cups01.jpg`,
+  'Two of Cups':         `${WIKIMEDIA}/f/f8/Cups02.jpg`,
+  'Three of Cups':       `${WIKIMEDIA}/7/7a/Cups03.jpg`,
+  'Four of Cups':        `${WIKIMEDIA}/3/35/Cups04.jpg`,
+  'Five of Cups':        `${WIKIMEDIA}/d/d7/Cups05.jpg`,
+  'Six of Cups':         `${WIKIMEDIA}/1/17/Cups06.jpg`,
+  'Seven of Cups':       `${WIKIMEDIA}/a/ae/Cups07.jpg`,
+  'Eight of Cups':       `${WIKIMEDIA}/6/60/Cups08.jpg`,
+  'Nine of Cups':        `${WIKIMEDIA}/2/24/Cups09.jpg`,
+  'Ten of Cups':         `${WIKIMEDIA}/8/84/Cups10.jpg`,
+  'Page of Cups':        `${WIKIMEDIA}/a/ad/Cups11.jpg`,
+  'Knight of Cups':      `${WIKIMEDIA}/f/fa/Cups12.jpg`,
+  'Queen of Cups':       `${WIKIMEDIA}/6/62/Cups13.jpg`,
+  'King of Cups':        `${WIKIMEDIA}/0/04/Cups14.jpg`,
+  // Swords
+  'Ace of Swords':       `${WIKIMEDIA}/1/1a/Swords01.jpg`,
+  'Two of Swords':       `${WIKIMEDIA}/9/9e/Swords02.jpg`,
+  'Three of Swords':     `${WIKIMEDIA}/0/02/Swords03.jpg`,
+  'Four of Swords':      `${WIKIMEDIA}/b/bf/Swords04.jpg`,
+  'Five of Swords':      `${WIKIMEDIA}/2/23/Swords05.jpg`,
+  'Six of Swords':       `${WIKIMEDIA}/2/29/Swords06.jpg`,
+  'Seven of Swords':     `${WIKIMEDIA}/3/34/Swords07.jpg`,
+  'Eight of Swords':     `${WIKIMEDIA}/a/a7/Swords08.jpg`,
+  'Nine of Swords':      `${WIKIMEDIA}/2/2f/Swords09.jpg`,
+  'Ten of Swords':       `${WIKIMEDIA}/d/d6/Swords10.jpg`,
+  'Page of Swords':      `${WIKIMEDIA}/4/4c/Swords11.jpg`,
+  'Knight of Swords':    `${WIKIMEDIA}/b/b0/Swords12.jpg`,
+  'Queen of Swords':     `${WIKIMEDIA}/d/d4/Swords13.jpg`,
+  'King of Swords':      `${WIKIMEDIA}/3/33/Swords14.jpg`,
+  // Pentacles
+  'Ace of Pentacles':    `${WIKIMEDIA}/f/fd/Pents01.jpg`,
+  'Two of Pentacles':    `${WIKIMEDIA}/9/9f/Pents02.jpg`,
+  'Three of Pentacles':  `${WIKIMEDIA}/4/42/Pents03.jpg`,
+  'Four of Pentacles':   `${WIKIMEDIA}/9/9a/Pents04.jpg`,
+  'Five of Pentacles':   `${WIKIMEDIA}/9/96/Pents05.jpg`,
+  'Six of Pentacles':    `${WIKIMEDIA}/a/a6/Pents06.jpg`,
+  'Seven of Pentacles':  `${WIKIMEDIA}/6/6a/Pents07.jpg`,
+  'Eight of Pentacles':  `${WIKIMEDIA}/4/49/Pents08.jpg`,
+  'Nine of Pentacles':   `${WIKIMEDIA}/f/f0/Pents09.jpg`,
+  'Ten of Pentacles':    `${WIKIMEDIA}/4/42/Pents10.jpg`,
+  'Page of Pentacles':   `${WIKIMEDIA}/e/ec/Pents11.jpg`,
+  'Knight of Pentacles': `${WIKIMEDIA}/d/d5/Pents12.jpg`,
+  'Queen of Pentacles':  `${WIKIMEDIA}/8/88/Pents13.jpg`,
+  'King of Pentacles':   `${WIKIMEDIA}/1/1c/Pents14.jpg`,
+};
+
+const SUIT_OF = name => {
+  if (['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World'].includes(name)) return 'Major';
+  if (name.endsWith('Wands')) return 'Wands';
+  if (name.endsWith('Cups')) return 'Cups';
+  if (name.endsWith('Swords')) return 'Swords';
+  return 'Pentacles';
+};
+
+const SUIT_CLASS = { Major:'suit-major', Wands:'suit-wands', Cups:'suit-cups', Swords:'suit-swords', Pentacles:'suit-pents' };
+const SUIT_COLOR = { Major:'#c9a84c', Wands:'#e07c3a', Cups:'#5aabcf', Swords:'#9aa8bc', Pentacles:'#7ab87a' };
+const SUIT_LABEL = { Major:'Major Arcana', Wands:'Wands', Cups:'Cups', Swords:'Swords', Pentacles:'Pentacles' };
+
+const MEANINGS = {
+  'The Fool': { kw:['beginnings','spontaneity','innocence'], m:"You stand at the edge of something new, unburdened by past experience. The Fool invites you to leap before you feel fully ready — trust that the journey itself will teach you what you need.", a:"Start the thing you've been overthinking.", rk:['recklessness','naivety','poor judgment'], rm:"Enthusiasm is outpacing caution right now. An impulse that feels liberating may actually be avoidance dressed up as adventure.", ra:"Pause and ask what you're running toward — versus what you're running from." },
+  'The Magician': { kw:['willpower','skill','manifestation'], m:"Every tool you need is already in front of you. The Magician signals that your current resources — knowledge, connections, energy — are sufficient to begin. The gap between wanting and having closes through deliberate action.", a:"Stop waiting for better conditions and use what you have now.", rk:['manipulation','wasted talent','trickery'], rm:"Potential is going unused, or worse, being misdirected. There may be a gap between how capable you appear and how much you're actually applying yourself.", ra:"Audit where your energy actually goes each day." },
+  'The High Priestess': { kw:['intuition','mystery','inner knowing'], m:"The answer you're seeking isn't in another opinion or more research — it's already present in what you already feel but haven't said aloud. Stillness is the method here, not action.", a:"Sit with the question longer before deciding.", rk:['repressed intuition','secrets','disconnection'], rm:"You may be ignoring or rationalizing away something your gut has been trying to tell you. External noise is drowning out internal signal.", ra:"Clear your schedule for an hour and just think without inputs." },
+  'The Empress': { kw:['abundance','nurturing','creativity'], m:"Growth is available to you right now — in relationships, creative work, or material comfort. The Empress asks you to tend to what you've already planted rather than constantly seeking new seeds.", a:"Invest in something you've already started instead of starting over.", rk:['neglect','creative block','dependence'], rm:"Something that should be flourishing is being starved of attention. You may be overextending care outward while neglecting your own needs.", ra:"Identify what you've been putting off nourishing — and do that first." },
+  'The Emperor': { kw:['structure','authority','stability'], m:"Solid foundations matter here. Whether it's finances, a project, or a relationship — the work now is to build systems that hold, not just to move fast. Authority exercised with discipline creates lasting results.", a:"Put a real structure around the thing you want to grow.", rk:['rigidity','control','domination'], rm:"Control is being applied where flexibility is needed. Stubbornness masquerading as principle may be blocking progress.", ra:"Ask yourself where you're holding on out of fear of losing control." },
+  'The Hierophant': { kw:['tradition','guidance','conformity'], m:"There is value in established paths and institutions right now — a mentor, a proven method, or a community with shared values. The question isn't whether to break rules but whether you've fully understood them first.", a:"Find someone who has done what you want to do and learn from them directly.", rk:['rebellion','subversion','dogma'], rm:"Convention is being followed out of fear rather than genuine belief, or conversely, you're rejecting structure that would actually help you.", ra:"Examine whether your resistance to the established path is principled or just avoidance." },
+  'The Lovers': { kw:['choice','alignment','connection'], m:"A significant choice is in front of you — not just about relationships, but about which values you're willing to actually live by. The Lovers card is about alignment between what you want and who you're becoming.", a:"Choose the option that you can commit to fully, not the one with fewer downsides.", rk:['misalignment','avoidance','disharmony'], rm:"Something is out of alignment — between your values and your actions, or between what you say you want and what you're actually choosing.", ra:"Name the choice you've been refusing to make." },
+  'The Chariot': { kw:['determination','victory','control'], m:"Forward motion is possible, but only through focused will. Competing impulses or external pressures can be overcome — not by eliminating them, but by holding direction firmly enough that they stop mattering.", a:"Commit to one direction completely and stop hedging.", rk:['aggression','lack of control','defeat'], rm:"Drive without direction is just spinning wheels. Force is being applied in a way that's creating resistance rather than progress.", ra:"Slow down enough to confirm you're pointed the right way before accelerating again." },
+  'Strength': { kw:['courage','patience','inner power'], m:"The power at work here is quiet, not loud. Genuine strength in this situation looks like staying calm under pressure, responding rather than reacting, and trusting that persistence outlasts intensity.", a:"Handle the difficult thing with more patience than you think it deserves.", rk:['self-doubt','weakness','insecurity'], rm:"Self-doubt is wearing you down more than the actual challenge in front of you. The obstacle is mostly internal.", ra:"Identify the fear underneath the hesitation and name it plainly." },
+  'The Hermit': { kw:['solitude','reflection','inner guidance'], m:"Withdrawal isn't isolation here — it's a deliberate move toward clarity. The Hermit signals that the answers you need require time alone with your own thoughts, away from the noise of other people's opinions.", a:"Take a real break from input and just think.", rk:['isolation','withdrawal','loneliness'], rm:"Solitude has tipped into disconnection. Pulling inward is now working against you rather than for you.", ra:"Reach out to one person you've been avoiding." },
+  'Wheel of Fortune': { kw:['cycles','change','fate'], m:"Circumstances are shifting — probably in ways that aren't entirely within your control. The Wheel of Fortune reminds you that cycles turn, and your job is to be positioned well when they do, not to stop them.", a:"Focus on what you can control and loosen your grip on what you can't.", rk:['bad luck','resistance','clinging'], rm:"You may be fighting a natural transition rather than moving with it. The resistance itself is costing more than what you're trying to hold onto.", ra:"Ask what you're trying to preserve that may already be gone." },
+  'Justice': { kw:['fairness','truth','accountability'], m:"Cause and effect are operating clearly here. A decision you make now will carry real weight, and past actions are producing their honest results. Clarity and honesty — with yourself especially — are the tools.", a:"Make the decision you know is right, not the one that's most comfortable.", rk:['dishonesty','unfairness','avoidance'], rm:"Something isn't being called by its real name. There may be bias, willful blindness, or a refusal to hold someone — including yourself — accountable.", ra:"Say the honest thing you've been softening." },
+  'The Hanged Man': { kw:['suspension','surrender','new perspective'], m:"The pause you're experiencing isn't a problem — it's the point. The Hanged Man says that forcing motion right now will solve nothing. Letting go of control, even temporarily, shifts the view in ways that action can't.", a:"Stop pushing and let the situation show you what it actually is.", rk:['stalling','martyrdom','resistance'], rm:"You're stuck not because the situation demands it, but because letting go feels too costly. The sacrifice being made may not be meaningful — just habitual.", ra:"Identify whether you're waiting wisely or just avoiding a hard move." },
+  'Death': { kw:['transformation','endings','transition'], m:"Something is completing — a phase, a relationship, an identity you've held. Death in tarot is rarely literal; it's the necessary ending that makes room for what's next. Resistance prolongs the transition without changing its outcome.", a:"Let the thing that's ending actually end.", rk:['stagnation','resistance to change','decay'], rm:"An ending that should have happened is being delayed. Clinging to something that's already over is consuming energy that belongs to what comes next.", ra:"Name the thing you're holding onto that's already finished." },
+  'Temperance': { kw:['balance','moderation','patience'], m:"The work here is integration — bringing together opposing forces, timelines, or needs into something that actually functions. Temperance asks for patience not as passivity, but as skillful pacing.", a:"Find the middle path between two things you've been treating as opposites.", rk:['excess','imbalance','discord'], rm:"Something is out of proportion — too much, too fast, or too extreme in one direction. The imbalance is visible to others even if it doesn't feel that way from inside.", ra:"Cut back on the thing you know you're overdoing." },
+  'The Devil': { kw:['bondage','materialism','shadow'], m:"Something has more hold over you than you'd like to admit — a habit, a dynamic, a belief about yourself. The chains in this card are often unlocked already; the question is whether you're willing to notice.", a:"Be honest about what you're choosing to stay attached to and why.", rk:['release','breaking free','reclaiming power'], rm:"A pattern or attachment is beginning to loosen. You're starting to see the thing clearly enough to step back from it.", ra:"Take the first concrete step away from what's been holding you." },
+  'The Tower': { kw:['upheaval','revelation','sudden change'], m:"Something built on an unstable foundation is coming apart. The Tower is disruptive, but the disruption is clarifying — it removes what wasn't actually working, even if it didn't feel that way before the collapse.", a:"Don't rebuild immediately; let the dust settle and see what's worth keeping.", rk:['avoidance','delayed collapse','fear of change'], rm:"The breakdown is being delayed but not prevented. Refusing to confront an unstable situation only increases the eventual cost.", ra:"Deal with the thing that's about to fail before it does on its own terms." },
+  'The Star': { kw:['hope','renewal','faith'], m:"After difficulty, a quiet sense of possibility returns. The Star isn't about dramatic recovery — it's about the slow restoration of trust, in circumstances and in yourself. Allow it without rushing it.", a:"Let yourself actually rest and recover instead of pushing through to the next thing.", rk:['despair','disconnection','lost faith'], rm:"Hope feels distant or performative right now. Something has depleted the reserves that usually sustain you.", ra:"Do one small thing today that genuinely restores you rather than just distracts you." },
+  'The Moon': { kw:['illusion','fear','the unconscious'], m:"Things are not fully as they appear. Anxiety, projection, or wishful thinking may be distorting what's real. The Moon asks you to move carefully through uncertainty rather than locking in interpretations prematurely.", a:"Get more information before you decide what the situation means.", rk:['confusion clearing','repressed fear','deception revealed'], rm:"What was murky is beginning to clarify. A fear or deception that's been operating in the background is becoming visible.", ra:"Trust the thing that's becoming clear even if it's uncomfortable." },
+  'The Sun': { kw:['joy','vitality','success'], m:"Clarity, energy, and genuine optimism are available to you right now. The Sun is one of the most unambiguous cards in the deck — things are working, or they're about to. Let yourself acknowledge that.", a:"Enjoy where you are instead of immediately moving the goalpost.", rk:['blocked joy','overconfidence','dimmed energy'], rm:"Joy is present but being blocked — by self-criticism, by comparison, or by an inability to be present with what's actually going well.", ra:"Name one concrete thing that's going right and sit with it." },
+  'Judgement': { kw:['reckoning','awakening','absolution'], m:"A moment of honest evaluation is here — not to punish, but to clarify. Judgement calls you to assess where you've been honestly and decide, with full information, who you want to be going forward.", a:"Make the decision you've been putting off by honestly accounting for where you actually stand.", rk:['self-doubt','ignoring the call','harsh self-judgment'], rm:"Self-criticism is being confused for self-awareness. The judgment being applied — to yourself or to a situation — is harsher than the facts warrant.", ra:"Separate what you actually did wrong from what you're just being hard on yourself about." },
+  'The World': { kw:['completion','integration','achievement'], m:"A significant cycle is completing. The World signals genuine accomplishment — not just finishing, but integrating what you've learned in a way that carries forward. Take the time to actually close this chapter.", a:"Mark the completion properly before rushing into what's next.", rk:['incompletion','shortcuts','loose ends'], rm:"Something is being declared done before it actually is. Loose ends left unresolved now will resurface later.", ra:"Identify what still needs to be finished before you move on." },
+  'Ace of Wands': { kw:['spark','inspiration','new energy'], m:"A burst of creative energy or motivation is available right now. This is the raw beginning of something — an idea, a project, a desire — that has genuine potential if you act on it while the momentum is there.", a:"Start the creative project you've been thinking about.", rk:['blocked creativity','false start','delay'], rm:"The energy is there but something is blocking its expression — self-doubt, poor timing, or too many options at once.", ra:"Remove one obstacle between you and starting." },
+  'Two of Wands': { kw:['planning','vision','decision'], m:"You've achieved something and now face a genuine choice about where to go next. The Two of Wands is about standing at the edge of your current world and deciding whether to step into a larger one.", a:"Make a concrete plan for the direction you keep thinking about.", rk:['fear of unknown','poor planning','indecision'], rm:"Opportunity is being missed because forward motion feels too risky. The planning phase has become a way to avoid committing.", ra:"Set a deadline for the decision you've been sitting on." },
+  'Three of Wands': { kw:['expansion','foresight','progress'], m:"Plans set in motion are now unfolding. The Three of Wands signals that you're in the middle of something that's actually working — ships are coming in, momentum is real. Stay the course.", a:"Trust the process you're in and resist the urge to pivot.", rk:['delays','obstacles','setbacks'], rm:"Expected results are taking longer than planned. Something external — logistics, timing, other people — is slowing down what should be moving.", ra:"Identify what's actually causing the delay and address it directly." },
+  'Four of Wands': { kw:['celebration','homecoming','milestone'], m:"A real milestone deserves real acknowledgment. The Four of Wands is about pausing to celebrate what's been built — with the people who matter — before moving on to the next challenge.", a:"Actually celebrate the thing you just accomplished instead of immediately moving on.", rk:['lack of celebration','instability','transition'], rm:"A moment that should feel like arrival instead feels hollow or premature. The foundation may not be as solid as it appears.", ra:"Check whether you've actually completed what you thought was finished." },
+  'Five of Wands': { kw:['conflict','competition','tension'], m:"Multiple competing forces are creating friction — different opinions, priorities, or ambitions are all in play at once. This isn't necessarily destructive; sometimes productive conflict clarifies what actually matters.", a:"Engage with the disagreement directly rather than trying to smooth it over.", rk:['avoiding conflict','suppressed tension','resolution'], rm:"Conflict is being avoided in a way that's creating more pressure underneath. Alternatively, a difficult competition is finally easing.", ra:"Have the conversation you've been avoiding." },
+  'Six of Wands': { kw:['victory','recognition','confidence'], m:"Effort has paid off and recognition is arriving. The Six of Wands is about earned success — the kind that comes from actually doing the work. Let yourself receive it without immediately minimizing it.", a:"Accept the credit you've earned instead of deflecting it.", rk:['ego','fall from grace','lack of recognition'], rm:"Success is being undermined — either by ego that's gotten ahead of substance, or by a genuine lack of acknowledgment for real work.", ra:"Assess whether you're seeking validation or actual results." },
+  'Seven of Wands': { kw:['defense','perseverance','holding ground'], m:"You're in a position worth defending — hold it. The Seven of Wands is about maintaining your stance under pressure, even when others push back or question your position.", a:"Stand your ground on the thing you know is right, even if it's unpopular.", rk:['giving up','overwhelmed','exhaustion'], rm:"The effort of defending your position has become exhausting. You may be fighting battles that aren't worth the cost.", ra:"Evaluate whether you're defending something valuable or just refusing to back down." },
+  'Eight of Wands': { kw:['speed','momentum','swift action'], m:"Things are moving fast — decisions, communication, and events are all accelerating. The Eight of Wands says the moment is now; hesitation will cost you more than imperfect action.", a:"Move quickly on the opportunity in front of you.", rk:['delays','miscommunication','frustration'], rm:"Something that should be moving quickly is stalled. Wires are crossed somewhere — in communication, logistics, or expectations.", ra:"Check your assumptions about what the other person actually understands." },
+  'Nine of Wands': { kw:['resilience','persistence','final push'], m:"You're close to the end of something demanding and you're tired — that's real. But the Nine of Wands says the capacity to finish is still there. One more push is what's actually required.", a:"Don't stop now; you're closer than it feels.", rk:['exhaustion','burnout','giving up'], rm:"Resilience has run out. Pushing through at this point may cause more damage than stepping back and recovering.", ra:"Rest before you make any major decisions." },
+  'Ten of Wands': { kw:['burden','overcommitment','responsibility'], m:"You're carrying more than your share — and you probably know it. The Ten of Wands asks whether each thing you're lugging forward is actually yours to carry, or whether some of it can be put down.", a:"Delegate or drop one obligation this week.", rk:['release','offloading','burnout'], rm:"A burden is finally being released — or desperately needs to be. The weight has become unsustainable.", ra:"Identify the single heaviest thing you're carrying and find a way to set it down." },
+  'Page of Wands': { kw:['enthusiasm','exploration','curiosity'], m:"A new interest or direction is calling for your attention. The Page of Wands is about following curiosity without needing it to be practical yet — exploration has value before it becomes a plan.", a:"Follow the thing you're curious about even if you don't know where it leads.", rk:['scattered energy','immaturity','delay'], rm:"Enthusiasm is present but unfocused — jumping from idea to idea without developing any of them.", ra:"Pick one interest and go deeper instead of wider." },
+  'Knight of Wands': { kw:['action','adventure','impulsiveness'], m:"Bold action is called for — the Knight of Wands moves fast, takes risks, and makes things happen through sheer drive. The energy is real; just make sure there's a destination in mind.", a:"Make the bold move, but check that it has a clear direction first.", rk:['recklessness','arrogance','burnout'], rm:"Speed has outpaced judgment. Action for its own sake is creating chaos or burning bridges.", ra:"Pause before the next move and ask what outcome you actually want." },
+  'Queen of Wands': { kw:['confidence','charisma','determination'], m:"Lead from your authentic self right now. The Queen of Wands is someone who knows what she wants and creates an environment where others can thrive alongside her.", a:"Take up the space you're entitled to and stop making yourself smaller.", rk:['jealousy','selfishness','insecurity'], rm:"Confidence has curdled into control or comparison. The energy that should be creative is being consumed by ego.", ra:"Check whether you're competing where you could be collaborating." },
+  'King of Wands': { kw:['leadership','vision','boldness'], m:"The King of Wands is a natural leader — someone who sees the big picture and can move people toward it. That capacity is available to you now. Lead with vision, not just with authority.", a:"Step into the leadership role you've been hesitating to own.", rk:['arrogance','impulsiveness','poor leadership'], rm:"Vision is present but execution is erratic or domineering. People are being pushed rather than inspired.", ra:"Ask for honest feedback on how your leadership is actually landing." },
+  'Ace of Cups': { kw:['new love','emotional opening','intuition'], m:"An emotional beginning is at hand — new love, renewed compassion, or a creative and spiritual opening. The Ace of Cups is an invitation to receive rather than reach. Let it come.", a:"Open yourself to connection you've been guarding against.", rk:['emotional block','repression','emptiness'], rm:"Something is blocking the flow of feeling — defensiveness, old wounds, or an unwillingness to be vulnerable.", ra:"Identify what you're protecting yourself from and ask if the protection is still necessary." },
+  'Two of Cups': { kw:['partnership','connection','mutual respect'], m:"A genuine connection is forming or deepening — one built on real recognition of each other. The Two of Cups is about mutual offering, not just attraction or convenience.", a:"Invest in the relationship that has genuine reciprocity.", rk:['imbalance','disconnection','broken trust'], rm:"A relationship that should be reciprocal is out of balance. One person is giving more than the other, or trust has been damaged.", ra:"Name the imbalance in the relationship instead of working around it." },
+  'Three of Cups': { kw:['celebration','friendship','community'], m:"Joy multiplies when shared. The Three of Cups is about the genuine pleasure of being with people you love — not obligation or networking, but real celebration and camaraderie.", a:"Spend time with people who actually fill you up.", rk:['excess','gossip','isolation'], rm:"Social connection is being overdone or has become toxic — too much indulgence, too much gossip, or a group dynamic that's more draining than energizing.", ra:"Step back from the social situation that's taking more than it gives." },
+  'Four of Cups': { kw:['apathy','contemplation','withdrawal'], m:"Something is being offered that isn't being seen. The Four of Cups is about the kind of dissatisfaction that misses what's right in front of it — looking inward when the answer is already external.", a:"Look at what's actually available to you right now before declaring there's nothing.", rk:['emerging from apathy','new motivation','awareness'], rm:"A period of withdrawal or disillusionment is ending. What felt meaningless is beginning to matter again.", ra:"Take the first step toward re-engaging with something you abandoned." },
+  'Five of Cups': { kw:['loss','grief','regret'], m:"Something real has been lost and the grief is valid. But the Five of Cups also shows cups still standing — not everything is gone. At some point, turning toward what remains becomes the work.", a:"Let yourself grieve, then make yourself look at what's still there.", rk:['moving on','acceptance','forgiveness'], rm:"Recovery is underway. The worst of the grief has passed and perspective is returning.", ra:"Take one small action toward rebuilding." },
+  'Six of Cups': { kw:['nostalgia','innocence','past'], m:"The past is visiting — memories, old connections, or a simpler way of being. The Six of Cups can be a comfort, but it can also be a place to hide from the present.", a:"Let the past inform you without letting it become your destination.", rk:['stuck in the past','naivety','unrealistic'], rm:"Nostalgia is functioning as avoidance. An idealized past is being used to avoid dealing with the present.", ra:"Identify what you're avoiding by thinking about the past instead." },
+  'Seven of Cups': { kw:['fantasy','choices','illusion'], m:"Many options are appearing, but not all of them are real. The Seven of Cups is a warning about wishful thinking and the paralysis that comes from too many imagined possibilities. Discernment is needed.", a:"Test one of your options against reality before falling in love with it.", rk:['clarity','decision','reality check'], rm:"Illusions are clearing and choices are becoming more grounded. A clearer picture of what's actually possible is emerging.", ra:"Move forward on the option that survived your scrutiny." },
+  'Eight of Cups': { kw:['walking away','disappointment','seeking meaning'], m:"Something that was built with real effort is being left behind — not because it failed catastrophically, but because it no longer fits. Walking away when something is merely unfulfilling takes more courage than leaving when it falls apart.", a:"Leave the thing that's no longer meaningful, even if it's still functional.", rk:['fear of moving on','staying too long','avoidance'], rm:"Departure is being delayed past the point where it serves you. Fear or obligation is keeping you in something you've already outgrown.", ra:"Set a date for the exit you've already decided on." },
+  'Nine of Cups': { kw:['contentment','satisfaction','wishes fulfilled'], m:"The Nine of Cups is the wish card — a genuine sense of satisfaction and having enough. This is a moment to actually enjoy what you've built rather than immediately upgrading your desires.", a:"Let yourself feel satisfied with where you are right now.", rk:['greed','dissatisfaction','materialism'], rm:"Satisfaction keeps moving just out of reach. What was supposed to be enough isn't. The problem is internal, not circumstantial.", ra:"Question whether the next thing you're chasing will actually change how you feel." },
+  'Ten of Cups': { kw:['harmony','family','fulfillment'], m:"Emotional fulfillment in relationships and home life is at its peak. The Ten of Cups is about the happiness that comes from genuine connection — the kind that took time and care to build.", a:"Be present with the people who matter instead of taking them for granted.", rk:['broken home','misaligned values','disconnection'], rm:"The picture of happiness on the surface doesn't match the reality underneath. Something in the domestic or relational sphere needs honest attention.", ra:"Have the conversation that keeps getting postponed in the name of keeping the peace." },
+  'Page of Cups': { kw:['creativity','sensitivity','new feelings'], m:"An unexpected emotional or creative message is arriving. The Page of Cups asks you to stay open to what's surprising, tender, or imaginative — even if it doesn't fit your current plan.", a:"Pay attention to the thing that moved you unexpectedly.", rk:['emotional immaturity','creative blocks','moodiness'], rm:"Feelings are being expressed without enough grounding — drama, immaturity, or creative energy with no outlet.", ra:"Find a constructive channel for the emotion that's been running the show." },
+  'Knight of Cups': { kw:['romance','charm','following the heart'], m:"A pursuit driven by genuine feeling is underway — romantic, creative, or idealistic. The Knight of Cups follows the heart with real commitment. Just make sure the vision you're chasing is actually what you think it is.", a:"Pursue the thing you feel deeply, and do it with full commitment.", rk:['moodiness','unrealistic','manipulation'], rm:"Romanticism has become impractical or manipulative. Charm is being used to avoid accountability.", ra:"Check whether the story you're telling about the situation is accurate." },
+  'Queen of Cups': { kw:['compassion','empathy','emotional intelligence'], m:"Deep emotional attunement is your resource right now. The Queen of Cups leads with empathy without losing herself in other people's feelings. Care from a place of stability, not depletion.", a:"Offer support from a full cup rather than running yourself empty.", rk:['emotional overwhelm','dependency','codependency'], rm:"Empathy has crossed into over-involvement. The emotional wellbeing of others is taking priority over your own to a degree that's unsustainable.", ra:"Reestablish one boundary you've been letting slide." },
+  'King of Cups': { kw:['emotional maturity','balance','diplomacy'], m:"Emotional wisdom is needed here — the capacity to feel deeply and still respond with composure. The King of Cups holds turbulent emotional territory without being overwhelmed by it.", a:"Respond to the difficult situation from your steadiest self, not your most reactive.", rk:['emotional manipulation','moodiness','volatility'], rm:"Emotions are either being suppressed to the point of coldness, or they're erupting in ways that create damage.", ra:"Name what you're actually feeling before saying anything important." },
+  'Ace of Swords': { kw:['clarity','breakthrough','truth'], m:"Mental clarity cuts through confusion — a solution, a truth, or a decisive insight is available right now. The Ace of Swords rewards directness. Say the thing you've been circling around.", a:"Be direct and clear in the conversation you've been softening.", rk:['confusion','brutality','misinformation'], rm:"Clarity is being blocked — either by deliberate dishonesty, or by using truth as a weapon without considering its impact.", ra:"Check whether you're being honest or just blunt." },
+  'Two of Swords': { kw:['stalemate','avoidance','difficult choice'], m:"You're in a deadlock — not because the answer doesn't exist, but because looking at it honestly feels too costly. The Two of Swords is a self-imposed blindfold. Removing it is the only way through.", a:"Make the decision you've been avoiding by looking at it directly.", rk:['information overload','overwhelm','indecision'], rm:"Too much information is creating more confusion than clarity. The blindfold is coming off but what's revealed feels overwhelming.", ra:"Reduce the inputs and trust the conclusion you keep coming back to." },
+  'Three of Swords': { kw:['heartbreak','grief','painful truth'], m:"Pain is present and it's real. The Three of Swords doesn't soften it — something has cut deeply. The card also asks you to let the grief move through rather than harden into resentment.", a:"Feel the hurt without turning it into a story that you carry forward forever.", rk:['recovery','releasing pain','forgiveness'], rm:"A painful chapter is starting to heal. The sharpness is dulling and perspective is returning.", ra:"Take one step that signals to yourself that you're moving forward." },
+  'Four of Swords': { kw:['rest','recovery','contemplation'], m:"The body and mind need genuine rest — not distraction or passive consumption, but actual recovery. The Four of Swords is a prescription for stillness before the next round of effort.", a:"Stop productive activity and actually rest.", rk:['restlessness','burnout','forced action'], rm:"Rest is being refused even when it's clearly needed. Pushing through is now costing more than what it's producing.", ra:"Stop for one day and see what clarity arrives." },
+  'Five of Swords': { kw:['conflict','winning at a cost','ego'], m:"A conflict may have been won, but at what cost? The Five of Swords asks whether the victory was worth the damage — to relationships, reputation, or your own integrity.", a:"Ask what you actually gained from the battle you just fought.", rk:['reconciliation','moving on','regret'], rm:"The fallout from a conflict is settling. There's an opportunity to reconcile, though it requires someone to back down first.", ra:"Decide whether pride or the relationship matters more right now." },
+  'Six of Swords': { kw:['transition','moving on','recovery'], m:"You're moving away from turbulence — not to a perfect destination, but to calmer water. The Six of Swords is about leaving behind what's been difficult and allowing the transition to happen at its own pace.", a:"Allow the recovery to unfold without forcing it to be faster or neater than it is.", rk:['stuck','unable to move on','baggage'], rm:"Transition is being resisted. The turbulence you're trying to leave keeps following because something hasn't been fully released.", ra:"Identify what you're still carrying from the situation you want to leave behind." },
+  'Seven of Swords': { kw:['deception','strategy','stealth'], m:"Something is not being fully disclosed — by you or someone around you. The Seven of Swords can mean strategic thinking or outright dishonesty. Either way, transparency will serve you better than cleverness here.", a:"Be more straightforward about your intentions than you currently are.", rk:['exposure','coming clean','confession'], rm:"Something that's been hidden is coming to light. A deception — your own or someone else's — is about to be revealed.", ra:"Get ahead of the disclosure rather than being caught off guard by it." },
+  'Eight of Swords': { kw:['imprisonment','victim mentality','restriction'], m:"The prison in the Eight of Swords is largely self-constructed. The bindings are loose and the path out is visible — but fear or helplessness is keeping you in place. The restriction is real, but smaller than it feels.", a:"Test one of the constraints you've assumed is fixed.", rk:['escape','releasing fear','clarity'], rm:"Self-imposed limitations are being recognized and released. A situation that felt inescapable is revealing its exit.", ra:"Take the step you previously convinced yourself was impossible." },
+  'Nine of Swords': { kw:['anxiety','nightmares','mental anguish'], m:"The fear and dread you're experiencing are real feelings, but they're bigger than the actual situation warrants. The Nine of Swords is about anxiety that amplifies worst-case thinking. What you're facing in the daylight is more manageable than what the mind creates at 3am.", a:"Write down the fear specifically and then check it against actual evidence.", rk:['recovery from anxiety','shame','hopelessness'], rm:"Rock bottom has been hit or is close. This is deeply uncomfortable, but it's also the point from which things begin to shift.", ra:"Talk to one person about what you're actually experiencing." },
+  'Ten of Swords': { kw:['painful ending','betrayal','rock bottom'], m:"A definitive end has occurred — and it is as bad as it looks. But the Ten of Swords is also the lowest possible point, which means the only direction available is up. The ending is real; so is what comes after.", a:"Accept that this chapter is over and begin to look toward what comes next.", rk:['survival','inevitable change','resistance'], rm:"The worst has passed or is finally being accepted. Recovery is beginning, even if it doesn't feel that way yet.", ra:"Acknowledge that you survived something difficult and give yourself credit for it." },
+  'Page of Swords': { kw:['curiosity','vigilance','new ideas'], m:"Sharp thinking and a hunger for information are present. The Page of Swords is alert, curious, and a little restless — fast to analyze and sometimes faster to speak than to listen.", a:"Gather information before forming your conclusion.", rk:['all talk','haste','scattered thinking'], rm:"Sharp intelligence is running ahead of wisdom. Analysis is being used to avoid rather than advance.", ra:"Slow down and check whether your conclusions are based on complete information." },
+  'Knight of Swords': { kw:['directness','speed','ambition'], m:"Action is fast and decisive — the Knight of Swords cuts through obstacles with clarity and speed. The risk is that speed outpaces consideration. Move, but check your peripheral vision.", a:"Act decisively, but make sure you've thought through the main risks.", rk:['recklessness','verbal aggression','burnout'], rm:"Speed and directness have become recklessness and aggression. The approach that works in some contexts is causing damage in this one.", ra:"Slow down and consider how your directness is being received." },
+  'Queen of Swords': { kw:['clarity','directness','independence'], m:"Clear thinking and honest communication are your tools right now. The Queen of Swords cuts through sentiment and confusion to see things as they actually are — and says so. This is a strength, not harshness.", a:"Say the clear, honest thing even if it's uncomfortable.", rk:['cold','bitter','overly critical'], rm:"Clarity has become coldness. The analytical edge is being used to wound or to keep others at a distance.", ra:"Check whether your honesty is in service of truth or of self-protection." },
+  'King of Swords': { kw:['authority','truth','clear judgment'], m:"Objective judgment and intellectual authority are needed here. The King of Swords decides based on principle, not emotion or convenience — and that clarity is exactly what the situation requires.", a:"Make the hard call based on what's actually right, not what's easiest.", rk:['tyranny','manipulation','coldness'], rm:"Intellectual authority is being wielded without compassion or fairness. Power is being used to control rather than to clarify.", ra:"Examine whether you're using your intelligence to understand or to dominate." },
+  'Ace of Pentacles': { kw:['opportunity','prosperity','new venture'], m:"A material opportunity is being offered — a new job, a financial opening, a practical beginning of something real. The Ace of Pentacles is grounded; it asks you to plant the seed and tend to it.", a:"Pursue the practical opportunity in front of you with real follow-through.", rk:['missed opportunity','poor planning','greed'], rm:"A material opportunity is being overlooked or squandered. Poor planning or impatience is undermining something that had real potential.", ra:"Review where you dropped the ball on a recent practical opportunity." },
+  'Two of Pentacles': { kw:['balance','adaptability','juggling'], m:"Multiple things are in motion at once and the challenge is keeping them all moving. The Two of Pentacles isn't about doing everything perfectly — it's about staying nimble as priorities shift.", a:"Identify which ball you can afford to drop right now and let it go.", rk:['overwhelm','disorganized','financial stress'], rm:"The juggling act is failing. Too many things are in the air and the balance is breaking down.", ra:"Cut something from your plate before everything crashes." },
+  'Three of Pentacles': { kw:['teamwork','skill','collaboration'], m:"Good work happens through genuine collaboration. The Three of Pentacles is about the combination of different skills toward a shared goal — each person contributing what they're best at.", a:"Lean on the skills of your collaborators instead of trying to do everything yourself.", rk:['lack of teamwork','mediocrity','conflict'], rm:"Collaboration is breaking down — misaligned goals, poor communication, or ego getting in the way of good work.", ra:"Name the collaboration problem directly rather than working around it." },
+  'Four of Pentacles': { kw:['security','conservatism','holding on'], m:"Security is real and worth protecting — but the Four of Pentacles asks whether protection has become hoarding. Clinging too tightly to what you have prevents it from growing.", a:"Examine whether you're being prudent or just afraid to let things flow.", rk:['greed','materialism','insecurity'], rm:"Financial or emotional security is being gripped so tightly that it's causing isolation or rigidity.", ra:"Practice one small act of generosity or release." },
+  'Five of Pentacles': { kw:['hardship','poverty','exclusion'], m:"Difficulty is real — financial stress, feeling left out in the cold, or a sense of scarcity. The Five of Pentacles also asks whether help that's available is being noticed or refused out of pride.", a:"Ask for the help that's available instead of suffering alone.", rk:['recovery','finding support','improvement'], rm:"A period of hardship is easing. Resources or support that weren't visible before are beginning to appear.", ra:"Accept the support that's been offered." },
+  'Six of Pentacles': { kw:['generosity','giving','receiving'], m:"The flow of resources — money, time, energy — is in balance when it moves both ways. The Six of Pentacles is about giving what you can and receiving without shame when it's your turn to receive.", a:"Be generous where you have abundance and open where you have need.", rk:['debt','selfishness','strings attached'], rm:"Generosity has strings attached, or support is coming from a place of power imbalance rather than genuine care.", ra:"Examine whether the help you're giving or receiving comes with hidden conditions." },
+  'Seven of Pentacles': { kw:['patience','investment','assessment'], m:"You're in the middle of something that takes time — and this is the moment to step back and evaluate whether the investment is yielding what you expected. Patience is required, but not blind patience.", a:"Assess your progress honestly before deciding to stay the course or change direction.", rk:['impatience','poor investment','low return'], rm:"Effort isn't producing the expected return. Something about the strategy or the investment needs to be reconsidered.", ra:"Evaluate whether the thing you're waiting on is actually going to pay off." },
+  'Eight of Pentacles': { kw:['mastery','dedication','craftsmanship'], m:"Focused, diligent work is the path right now. The Eight of Pentacles is about putting in the hours — not for validation, but because the craft itself demands it. Skill deepens through repetition and attention.", a:"Put your head down and do the focused work without looking for shortcuts.", rk:['lack of focus','perfectionism','mediocrity'], rm:"Work is either being done without care or perfection is becoming an obstacle to actually finishing anything.", ra:"Ship the work that's good enough instead of waiting for it to be perfect." },
+  'Nine of Pentacles': { kw:['independence','self-sufficiency','luxury'], m:"Hard work has produced genuine comfort and independence. The Nine of Pentacles is about enjoying what you've earned — with the confidence that comes from having built it yourself.", a:"Enjoy the results of your work instead of immediately raising the bar.", rk:['dependence','financial setback','overwork'], rm:"The self-sufficiency and comfort you've built feel unstable or hollow. Something about the foundation needs attention.", ra:"Check whether the lifestyle you're maintaining is actually sustainable." },
+  'Ten of Pentacles': { kw:['legacy','abundance','long-term security'], m:"The Ten of Pentacles is about the long view — wealth, stability, and meaning that extends beyond yourself to family, community, or legacy. What you're building now will outlast the moment.", a:"Make decisions with the long-term in mind, not just immediate returns.", rk:['family conflict','instability','fleeting success'], rm:"Long-term security is being undermined — by family conflict, poor financial decisions, or short-sighted choices.", ra:"Address the thing that's quietly eroding the stability you've built." },
+  'Page of Pentacles': { kw:['ambition','diligence','new goals'], m:"A new practical goal is taking shape — something tangible, learnable, and worth working toward. The Page of Pentacles is a student of the real world: methodical, curious, and willing to start at the beginning.", a:"Start the practical skill or project you've been thinking about and treat it as a serious endeavor.", rk:['lack of ambition','procrastination','poor focus'], rm:"Good intentions exist but aren't being followed through on. Plans stay plans and execution doesn't materialize.", ra:"Turn one idea into a first concrete action today." },
+  'Knight of Pentacles': { kw:['reliability','hard work','patience'], m:"Slow, steady, methodical effort is exactly what's required. The Knight of Pentacles isn't glamorous, but it's the energy that actually gets things done — one reliable step at a time.", a:"Be the person who follows through completely on what they said they'd do.", rk:['stubbornness','boredom','stagnation'], rm:"Diligence has become rigidity. The reliable approach is now preventing necessary adaptation.", ra:"Ask whether you're being thorough or just avoiding change." },
+  'Queen of Pentacles': { kw:['nurturing','practicality','abundance'], m:"Practical care — for a household, a business, a body, a project — is the work here. The Queen of Pentacles knows how to make things grow by attending to real needs without drama.", a:"Take care of the practical fundamentals before pursuing anything bigger.", rk:['imbalance','self-neglect','materialism'], rm:"Nurturing others has come at the expense of self-care. The wellspring is running dry.", ra:"Direct some of the care you give outward back toward yourself." },
+  'King of Pentacles': { kw:['wealth','stability','mastery'], m:"Mastery of the material world — built through patience, discipline, and real expertise. The King of Pentacles has done the work and created lasting value. That energy is available to you now.", a:"Operate from a place of established competence and abundance, not scarcity.", rk:['greed','stubbornness','poor management'], rm:"Wealth or authority is being managed poorly — through greed, inflexibility, or corruption.", ra:"Examine whether you're stewarding your resources well or just accumulating them." },
+};
+
+// Build deck
+const DECK = [];
+const MAJOR = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World'];
+const RANKS = ['Ace','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Page','Knight','Queen','King'];
+const SUITS = ['Wands','Cups','Swords','Pentacles'];
+MAJOR.forEach(n => DECK.push(n));
+SUITS.forEach(s => RANKS.forEach(r => DECK.push(`${r} of ${s}`)));
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let currentCard = null;
+
+function resetHome() {
+  // Close panel if open
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+
+  // Clear card stage, restore placeholder
+  const stage = document.getElementById('cardStage');
+  stage.innerHTML = '<div class="card-placeholder" id="placeholder">Draw a card</div>';
+
+  // Reset label
+  const label = document.getElementById('cardLabel');
+  label.classList.remove('visible');
+  document.getElementById('labelName').textContent = '';
+  document.getElementById('labelSub').textContent = '';
+
+  // Reset button
+  const btn = document.getElementById('drawBtn');
+  btn.disabled = false;
+  btn.textContent = 'Draw Card';
+
+  currentCard = null;
+}
+
+function drawCard() {
+  const btn = document.getElementById('drawBtn');
+  btn.disabled = true;
+  btn.textContent = 'Drawing…';
+
+  const name = DECK[Math.floor(Math.random() * DECK.length)];
+  const reversed = Math.random() < 0.5;
+  currentCard = { name, reversed };
+
+  const suit = SUIT_OF(name);
+  const color = SUIT_COLOR[suit];
+  const suitClass = SUIT_CLASS[suit];
+
+  const stage = document.getElementById('cardStage');
+  const placeholder = document.getElementById('placeholder');
+  if (placeholder) placeholder.remove();
+
+  // Remove existing card
+  const existing = stage.querySelector('.card-wrap');
+  if (existing) existing.remove();
+
+  // Build skeleton while image loads
+  const skeleton = document.createElement('div');
+  skeleton.className = 'card-img-skeleton';
+  stage.appendChild(skeleton);
+
+  // Preload image
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    skeleton.remove();
+    renderCard(name, reversed, suit, color, suitClass, img.src);
+    btn.disabled = false;
+    btn.textContent = 'Draw Again';
+  };
+  img.onerror = () => {
+    // Image failed (likely CORS/blocked) — render card without image, show symbol fallback
+    skeleton.remove();
+    renderCard(name, reversed, suit, color, suitClass, null);
+    btn.disabled = false;
+    btn.textContent = 'Draw Again';
+  };
+  img.src = IMAGES[name];
+}
+
+function renderCard(name, reversed, suit, color, suitClass, imgSrc) {
+  const stage = document.getElementById('cardStage');
+
+  const wrap = document.createElement('div');
+  wrap.className = `card-wrap ${reversed ? 'reversed' : ''} animating`;
+  wrap.setAttribute('role', 'button');
+  wrap.setAttribute('aria-label', `${name}, ${reversed ? 'reversed' : 'upright'}. Tap for meaning.`);
+  wrap.onclick = () => openPanel(name, reversed, suit, color, suitClass, imgSrc);
+
+  setTimeout(() => wrap.classList.remove('animating'), 600);
+
+  if (imgSrc) {
+    const imgEl = document.createElement('img');
+    imgEl.className = 'card-img loaded';
+    imgEl.src = imgSrc;
+    imgEl.alt = name;
+    imgEl.style.borderColor = color + '44';
+    wrap.appendChild(imgEl);
+  } else {
+    // Fallback: elegant no-image card
+    const fallback = document.createElement('div');
+    fallback.style.cssText = `width:200px;height:348px;background:linear-gradient(160deg,#1a1628 0%,#110d1c 100%);border:1px solid ${color}44;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;box-shadow:0 12px 48px rgba(0,0,0,0.7)`;
+    fallback.innerHTML = `<div style="font-family:'Cinzel',serif;font-size:32px;color:${color};opacity:0.7">✦</div><div style="font-family:'Cinzel',serif;font-size:13px;color:${color};letter-spacing:0.08em;text-align:center;line-height:1.4">${name}</div><div style="font-size:10px;color:#3a3248;letter-spacing:0.2em;text-transform:uppercase;font-family:'Cinzel',serif">${reversed?'Reversed':'Upright'}</div>`;
+    wrap.appendChild(fallback);
+  }
+
+  const glow = document.createElement('div');
+  glow.className = 'card-glow';
+  glow.style.borderColor = color;
+  wrap.appendChild(glow);
+
+  const hint = document.createElement('div');
+  hint.className = 'tap-hint';
+  hint.textContent = reversed ? 'Reversed · tap' : 'Tap for meaning';
+  wrap.appendChild(hint);
+
+  stage.appendChild(wrap);
+
+  // Update label
+  const label = document.getElementById('cardLabel');
+  document.getElementById('labelName').textContent = name;
+  document.getElementById('labelSub').textContent = `${SUIT_LABEL[suit]} · ${reversed ? 'Reversed' : 'Upright'}`;
+  document.getElementById('labelSub').style.color = color;
+  label.classList.add('visible');
+}
+
+// ─────────────────────────────────────────────
+// MEANING PANEL
+// ─────────────────────────────────────────────
+function openPanel(name, reversed, suit, color, suitClass, imgSrc) {
+  const m = MEANINGS[name];
+  if (!m) return;
+
+  const keywords = reversed ? m.rk : m.kw;
+  const meaning  = reversed ? m.rm : m.m;
+  const advice   = reversed ? m.ra : m.a;
+
+  // Build header
+  const header = document.getElementById('panelHeader');
+  let imgHTML = '';
+  if (imgSrc) {
+    imgHTML = `<img class="panel-card-img ${reversed ? 'reversed-img' : ''}" src="${imgSrc}" alt="${name}" style="border-color:${color}44">`;
+  } else {
+    imgHTML = `<div style="width:90px;height:156px;flex-shrink:0;background:linear-gradient(160deg,#1a1628,#110d1c);border:1px solid ${color}44;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;color:${color}">✦</div>`;
+  }
+
+  const kwHTML = keywords.map(k =>
+    `<span class="keyword" style="color:${color};border-color:${color}44">${k}</span>`
+  ).join('');
+
+  header.innerHTML = `
+    ${imgHTML}
+    <div class="panel-card-info">
+      <div class="panel-name">${name}</div>
+      <div class="panel-orientation" style="color:${color}">${SUIT_LABEL[suit]} · ${reversed ? 'Reversed' : 'Upright'}</div>
+      <div class="panel-keywords">${kwHTML}</div>
+    </div>
+  `;
+
+  document.getElementById('panelMeaning').textContent = meaning;
+  document.getElementById('adviceLabel').style.color = color;
+  document.getElementById('adviceLabel').textContent = 'Advice';
+  document.getElementById('adviceText').textContent = advice;
+
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePanel(e) {
+  if (e && e.target !== document.getElementById('overlay')) return;
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ─────────────────────────────────────────────
+// SWIPE DOWN ON PANEL → close
+// ─────────────────────────────────────────────
+let touchStartY = 0;
+document.getElementById('panel').addEventListener('touchstart', e => {
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+document.getElementById('panel').addEventListener('touchmove', e => {
+  const delta = e.touches[0].clientY - touchStartY;
+  if (delta > 60 && document.getElementById('panel').scrollTop === 0) {
+    document.getElementById('overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}, { passive: true });
+
+// ─────────────────────────────────────────────
+// PULL-TO-RESHUFFLE
+// ─────────────────────────────────────────────
+(function () {
+  const PTR_THRESHOLD = 72; // px of pull needed to trigger
+  const PTR_MAX       = 110;
+  let ptr_startY = 0;
+  let ptr_delta  = 0;
+  let ptr_active = false;
+
+  // Inject PTR indicator
+  const ptr = document.createElement('div');
+  ptr.id = 'ptr';
+  ptr.innerHTML = `
+    <div id="ptr-inner">
+      <div id="ptr-icon">✦</div>
+      <div id="ptr-label">Pull to reset</div>
+    </div>`;
+  document.querySelector('.app').prepend(ptr);
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #ptr {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+      transform: translateY(-100%);
+      transition: transform 0.25s ease;
+    }
+    #ptr-inner {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 20px;
+      background: #1c1828;
+      border: 1px solid rgba(201,168,76,0.25);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    #ptr-icon {
+      font-size: 14px;
+      color: #c9a84c;
+      transition: transform 0.2s;
+    }
+    #ptr-label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #7a6a48;
+    }
+    #ptr.ready #ptr-icon { transform: rotate(180deg); color: #c9a84c; }
+    #ptr.ready #ptr-label { color: #c9a84c; }
+    #ptr.triggered #ptr-icon {
+      animation: ptr-spin 0.6s linear infinite;
+    }
+    @keyframes ptr-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  function setPtrY(y) {
+    // ease the pull so it resists after threshold
+    const eased = y < PTR_THRESHOLD
+      ? y
+      : PTR_THRESHOLD + (y - PTR_THRESHOLD) * 0.3;
+    const clamped = Math.min(eased, PTR_MAX);
+    ptr.style.transform = `translateY(calc(-100% + ${clamped}px))`;
+    ptr.style.transition = 'none';
+
+    if (y >= PTR_THRESHOLD) {
+      ptr.classList.add('ready');
+    } else {
+      ptr.classList.remove('ready');
+    }
+  }
+
+  function resetPtr(triggered) {
+    ptr.style.transition = 'transform 0.3s cubic-bezier(0.22,1,0.36,1)';
+    ptr.style.transform = 'translateY(-100%)';
+    ptr.classList.remove('ready', 'triggered');
+    ptr_active = false;
+    ptr_delta = 0;
+    if (triggered) {
+      ptr.classList.add('triggered');
+      setTimeout(() => {
+        ptr.classList.remove('triggered');
+        resetHome();
+      }, 400);
+    }
+  }
+
+  document.addEventListener('touchstart', e => {
+    // Only trigger if panel is closed and we're scrolled to top
+    if (document.getElementById('overlay').classList.contains('open')) return;
+    if (window.scrollY > 0) return;
+    ptr_startY = e.touches[0].clientY;
+    ptr_active = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!ptr_active) return;
+    if (document.getElementById('overlay').classList.contains('open')) return;
+    ptr_delta = e.touches[0].clientY - ptr_startY;
+    if (ptr_delta <= 0) { ptr_active = false; return; }
+    // Show indicator
+    setPtrY(ptr_delta);
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!ptr_active) return;
+    const triggered = ptr_delta >= PTR_THRESHOLD;
+    resetPtr(triggered);
+  }, { passive: true });
+
+  document.addEventListener('touchcancel', () => {
+    if (ptr_active) resetPtr(false);
+  }, { passive: true });
+})();
+
+// ─────────────────────────────────────────────
+// PWA — SERVICE WORKER + INSTALL PROMPT
+// ─────────────────────────────────────────────
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show banner after a short delay
+  setTimeout(() => {
+    const banner = document.getElementById('installBanner');
+    banner.classList.add('visible');
+  }, 2500);
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  dismissInstall();
+});
+
+function dismissInstall() {
+  document.getElementById('installBanner').classList.remove('visible');
+}
+
+// Register service worker (inline, via blob URL)
+if ('serviceWorker' in navigator) {
+  const SW_CODE = `
+const CACHE = 'tarot-v1';
+const ASSETS = [location.href];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+  // Cache-first for the app shell; network-first for Wikimedia images
+  if (url.hostname === 'upload.wikimedia.org') {
+    e.respondWith(
+      caches.open(CACHE).then(cache =>
+        cache.match(e.request).then(hit => {
+          if (hit) return hit;
+          return fetch(e.request).then(res => {
+            if (res.ok) cache.put(e.request, res.clone());
+            return res;
+          }).catch(() => hit || new Response('', { status: 404 }));
+        })
+      )
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then(hit => hit || fetch(e.request).catch(() =>
+        caches.match('/') || new Response('Offline', { status: 503 })
+      ))
+    );
+  }
+});
+`;
+
+  const blob = new Blob([SW_CODE], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+
+  navigator.serviceWorker.register(swUrl, { scope: './' })
+    .then(reg => console.log('SW registered', reg.scope))
+    .catch(err => console.warn('SW registration failed (expected if file:// protocol):', err));
+}
+
+// ─────────────────────────────────────────────
+// PWA MANIFEST (injected dynamically)
+// ─────────────────────────────────────────────
+const manifest = {
+  name: 'Tarot · The Oracle\'s Table',
+  short_name: 'Tarot',
+  description: '78-card Rider-Waite-Smith tarot deck with full meanings',
+  start_url: '.',
+  display: 'standalone',
+  background_color: '#0c0a12',
+  theme_color: '#0c0a12',
+  icons: [
+    { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230c0a12"/><text y=".9em" font-size="80" x="10">✦</text></svg>', sizes: '192x192', type: 'image/svg+xml' },
+    { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230c0a12"/><text y=".9em" font-size="80" x="10">✦</text></svg>', sizes: '512x512', type: 'image/svg+xml' }
+  ]
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+const manifestUrl = URL.createObjectURL(manifestBlob);
+const manifestLink = document.createElement('link');
+manifestLink.rel = 'manifest';
+manifestLink.href = manifestUrl;
+document.head.appendChild(manifestLink);
+</script>
+</body>
+</html>
