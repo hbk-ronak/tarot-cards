@@ -6,9 +6,9 @@
 <meta name="theme-color" content="#0d0a14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Tarot">
-<meta name="description" content="78-card Rider-Waite-Smith tarot deck with full meanings">
-<title>Tarot · The Oracle's Table</title>
+<meta name="apple-mobile-web-app-title" content="Veil & Void">
+<meta name="description" content="78-card tarot deck with full meanings">
+<title>Veil &amp; Void</title>
 
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
@@ -22,20 +22,40 @@
 
 <style>
 :root {
-  --bg: #0c0a12;
-  --bg2: #13101e;
-  --bg3: #1a1628;
-  --gold: #c9a84c;
-  --gold-dim: #7a6630;
-  --text: #e8dfc8;
-  --text2: #a09880;
-  --text3: #5a5248;
-  --border: #2a2438;
-  --border2: #3a3248;
+  --bg: #080610;
+  --bg2: #110e1c;
+  --bg3: #1c1830;
+  --gold: #d4a843;
+  --gold-dim: #7a6028;
+  --gold-bright: #f0c860;
+  --text: #ede8d8;
+  --text2: #b8ae98;
+  --text3: #6e6558;
+  --border: #2e2845;
+  --border2: #3e3858;
+  --placeholder-border: #5a507a;
+  --placeholder-text: #7a6ea0;
   --radius: 10px;
-  /* Card aspect ratio: ~1.74 (standard tarot) */
   --card-w: min(52vw, 200px);
   --card-h: calc(var(--card-w) * 1.74);
+}
+
+:root[data-theme="light"] {
+  --overlay-bg: rgba(180,165,140,0.72);
+  --bg: #faf6ee;
+  --bg2: #f0e8d8;
+  --bg3: #e4d8c4;
+  --gold: #7a5a18;
+  --gold-dim: #a87c28;
+  --gold-bright: #5a4010;
+  --text: #1a1430;
+  --text2: #3c3458;
+  --text3: #7a6e8a;
+  --border: #c8b898;
+  --border2: #b0a080;
+  --placeholder-border: #8a7868;
+  --placeholder-text: #6a5e50;
+  --tap-hint-bg: rgba(250,246,238,0.92);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -59,8 +79,9 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 100% 55% at 50% -5%, #1e1538 0%, transparent 65%),
-    radial-gradient(ellipse 70% 45% at 85% 90%, #0e0a1a 0%, transparent 60%);
+    radial-gradient(ellipse 90% 50% at 50% 0%, #1e1640 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 10% 100%, #0e0820 0%, transparent 55%),
+    radial-gradient(ellipse 50% 35% at 90% 80%, #180c30 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
 }
@@ -68,10 +89,15 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
-  opacity: 0.03;
+  opacity: 0.04;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 0;
+}
+[data-theme="light"] body::before {
+  background:
+    radial-gradient(ellipse 90% 50% at 50% 0%, #ddd0b8 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 10% 100%, #e8dcc8 0%, transparent 55%);
 }
 
 /* ── APP SHELL ── */
@@ -92,31 +118,16 @@ body::after {
 .header {
   width: 100%;
   text-align: center;
-  padding: 28px 24px 20px;
+  padding: 20px 24px 14px;
   flex-shrink: 0;
+  position: relative;
 }
 .header-eyebrow {
   font-family: 'Cinzel', serif;
-  font-size: 9px;
-  letter-spacing: 0.5em;
+  font-size: clamp(13px, 3.8vw, 17px);
+  letter-spacing: 0.35em;
   color: var(--gold);
   text-transform: uppercase;
-  margin-bottom: 8px;
-}
-.header h1 {
-  font-family: 'Cinzel', serif;
-  font-size: clamp(22px, 6vw, 30px);
-  font-weight: 400;
-  color: var(--text);
-  letter-spacing: 0.1em;
-  line-height: 1;
-}
-.header-sub {
-  margin-top: 7px;
-  font-size: 11px;
-  color: var(--text3);
-  letter-spacing: 0.12em;
-  font-style: italic;
 }
 
 /* ── CARD STAGE ── fills remaining vertical space ── */
@@ -132,12 +143,12 @@ body::after {
 .card-placeholder {
   width: var(--card-w);
   height: var(--card-h);
-  border: 1px dashed var(--border2);
+  border: 1px dashed var(--placeholder-border);
   border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--border2);
+  color: var(--placeholder-text);
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 0.3em;
@@ -179,7 +190,10 @@ body::after {
   border: 1px solid transparent;
 }
 .card-img.loaded {
-  box-shadow: 0 16px 56px rgba(0,0,0,0.75);
+  box-shadow: 0 16px 56px rgba(0,0,0,0.55);
+}
+[data-theme="light"] .card-img.loaded {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
 }
 
 .card-glow {
@@ -202,8 +216,8 @@ body::after {
   font-size: 8px;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: rgba(201,168,76,0.55);
-  background: linear-gradient(transparent, rgba(13,10,20,0.88));
+  color: rgba(201,168,76,0.65);
+  background: linear-gradient(transparent, var(--tap-hint-bg, rgba(13,10,20,0.88)));
   border-radius: 0 0 var(--radius) var(--radius);
   pointer-events: none;
 }
@@ -296,7 +310,7 @@ body::after {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(5,3,10,0.85);
+  background: var(--overlay-bg, rgba(5,3,10,0.85));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   display: flex;
@@ -316,7 +330,7 @@ body::after {
   max-width: 480px;
   /* Max height respects safe area */
   max-height: calc(90dvh - env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(160deg, #1c1828 0%, #110e1c 100%);
+  background: linear-gradient(160deg, var(--bg2) 0%, var(--bg) 100%);
   border: 1px solid rgba(201,168,76,0.22);
   border-bottom: none;
   border-radius: 20px 20px 0 0;
@@ -469,13 +483,34 @@ body::after {
   display: flex; align-items: center; justify-content: center;
 }
 
+/* ── THEME TOGGLE ── */
+.theme-toggle {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  padding: 6px;
+  line-height: 1;
+  transition: color 0.2s;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.theme-toggle:hover { color: var(--gold); }
+.theme-toggle-icon { font-size: 16px; }
+
 /* ── DESKTOP UPGRADES ── */
 @media (min-width: 520px) {
   :root {
     --card-w: 200px;
   }
-  .header { padding: 40px 32px 24px; }
-  .header h1 { font-size: 28px; }
+  .header { padding: 28px 32px 18px; }
   .btn-row { padding: 20px 32px 40px; }
   .draw-btn { padding: 16px 24px; font-size: 11px; }
   .panel {
@@ -492,9 +527,10 @@ body::after {
 
 <div class="app" id="app">
   <header class="header">
-    <div class="header-eyebrow">✦ The Oracle's Table ✦</div>
-    <h1>Tarot</h1>
-    <p class="header-sub">78 cards · Rider-Waite-Smith</p>
+    <div class="header-eyebrow">✦ Veil &amp; Void ✦</div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode">
+      <span class="theme-toggle-icon" id="themeIcon">☀︎</span>
+    </button>
   </header>
 
   <div class="card-stage" id="cardStage">
@@ -535,6 +571,42 @@ body::after {
 </div>
 
 <script>
+// ─────────────────────────────────────────────
+// THEME TOGGLE
+// ─────────────────────────────────────────────
+(function() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+
+function toggleTheme() {
+  const root = document.documentElement;
+  const isLight = root.getAttribute('data-theme') === 'light';
+  const icon = document.getElementById('themeIcon');
+  if (isLight) {
+    root.removeAttribute('data-theme');
+    icon.textContent = '☀︎';
+    localStorage.removeItem('theme');
+  } else {
+    root.setAttribute('data-theme', 'light');
+    icon.textContent = '☽';
+    localStorage.setItem('theme', 'light');
+  }
+}
+
+// Init button icon on load
+document.addEventListener('DOMContentLoaded', function() {
+  const icon = document.getElementById('themeIcon');
+  if (!icon) return;
+  if (document.documentElement.getAttribute('data-theme') === 'light') {
+    icon.textContent = '☽';
+  } else {
+    icon.textContent = '☀︎';
+  }
+});
+
 // ─────────────────────────────────────────────
 // CARD DATA
 // ─────────────────────────────────────────────
