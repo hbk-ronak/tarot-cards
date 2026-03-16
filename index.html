@@ -10,8 +10,15 @@
 <meta name="description" content="78-card Rider-Waite-Smith tarot deck with full meanings">
 <title>Tarot · The Oracle's Table</title>
 
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+<!--
+  Fonts: served from local assets/ when download-assets.js has been run,
+  otherwise falls back to Google Fonts CDN.
+-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
+<link id="font-stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
 :root {
@@ -532,92 +539,111 @@ body::after {
 // CARD DATA
 // ─────────────────────────────────────────────
 
+// When download-assets.js has been run, images are served from ./assets/images/
+// Otherwise they fall back to Wikimedia Commons CDN.
+const LOCAL_IMAGES_BASE = './assets/images';
 const WIKIMEDIA = 'https://upload.wikimedia.org/wikipedia/commons';
 
-// All 78 Wikimedia Commons RWS image URLs (public domain)
+// Detect if local assets are bundled (set by download-assets.js via a sentinel file)
+// We try a lightweight HEAD request; if it fails we stay on CDN.
+let USE_LOCAL_ASSETS = false;
+(function detectLocalAssets() {
+  const probe = new XMLHttpRequest();
+  probe.open('HEAD', LOCAL_IMAGES_BASE + '/.bundled', false /* sync, before any card draw */);
+  try { probe.send(); USE_LOCAL_ASSETS = (probe.status === 200); } catch (_) {}
+})();
+
+function imgUrl(wikimediaPath, localFile) {
+  return USE_LOCAL_ASSETS
+    ? `${LOCAL_IMAGES_BASE}/${localFile}`
+    : `${WIKIMEDIA}/${wikimediaPath}`;
+}
+
+// All 78 Rider-Waite-Smith card images (public domain, from Wikimedia Commons)
+// imgUrl(wikimediaPath, localFilename) — uses local asset if download-assets.js was run
 const IMAGES = {
-  'The Fool':            `${WIKIMEDIA}/9/90/RWS_Tarot_00_Fool.jpg`,
-  'The Magician':        `${WIKIMEDIA}/d/de/RWS_Tarot_01_Magician.jpg`,
-  'The High Priestess':  `${WIKIMEDIA}/8/88/RWS_Tarot_02_High_Priestess.jpg`,
-  'The Empress':         `${WIKIMEDIA}/d/d2/RWS_Tarot_03_Empress.jpg`,
-  'The Emperor':         `${WIKIMEDIA}/c/c3/RWS_Tarot_04_Emperor.jpg`,
-  'The Hierophant':      `${WIKIMEDIA}/8/8d/RWS_Tarot_05_Hierophant.jpg`,
-  'The Lovers':          `${WIKIMEDIA}/3/3a/TheLovers.jpg`,
-  'The Chariot':         `${WIKIMEDIA}/9/9b/RWS_Tarot_07_Chariot.jpg`,
-  'Strength':            `${WIKIMEDIA}/f/f5/RWS_Tarot_08_Strength.jpg`,
-  'The Hermit':          `${WIKIMEDIA}/4/4d/RWS_Tarot_09_Hermit.jpg`,
-  'Wheel of Fortune':    `${WIKIMEDIA}/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg`,
-  'Justice':             `${WIKIMEDIA}/e/e0/RWS_Tarot_11_Justice.jpg`,
-  'The Hanged Man':      `${WIKIMEDIA}/2/2b/RWS_Tarot_12_Hanged_Man.jpg`,
-  'Death':               `${WIKIMEDIA}/d/d7/RWS_Tarot_13_Death.jpg`,
-  'Temperance':          `${WIKIMEDIA}/f/f8/RWS_Tarot_14_Temperance.jpg`,
-  'The Devil':           `${WIKIMEDIA}/5/55/RWS_Tarot_15_Devil.jpg`,
-  'The Tower':           `${WIKIMEDIA}/5/53/RWS_Tarot_16_Tower.jpg`,
-  'The Star':            `${WIKIMEDIA}/d/db/RWS_Tarot_17_Star.jpg`,
-  'The Moon':            `${WIKIMEDIA}/7/7f/RWS_Tarot_18_Moon.jpg`,
-  'The Sun':             `${WIKIMEDIA}/1/17/RWS_Tarot_19_Sun.jpg`,
-  'Judgement':           `${WIKIMEDIA}/d/dd/RWS_Tarot_20_Judgement.jpg`,
-  'The World':           `${WIKIMEDIA}/f/ff/RWS_Tarot_21_World.jpg`,
+  'The Fool':            imgUrl('9/90/RWS_Tarot_00_Fool.jpg',            'RWS_Tarot_00_Fool.jpg'),
+  'The Magician':        imgUrl('d/de/RWS_Tarot_01_Magician.jpg',        'RWS_Tarot_01_Magician.jpg'),
+  'The High Priestess':  imgUrl('8/88/RWS_Tarot_02_High_Priestess.jpg',  'RWS_Tarot_02_High_Priestess.jpg'),
+  'The Empress':         imgUrl('d/d2/RWS_Tarot_03_Empress.jpg',         'RWS_Tarot_03_Empress.jpg'),
+  'The Emperor':         imgUrl('c/c3/RWS_Tarot_04_Emperor.jpg',         'RWS_Tarot_04_Emperor.jpg'),
+  'The Hierophant':      imgUrl('8/8d/RWS_Tarot_05_Hierophant.jpg',      'RWS_Tarot_05_Hierophant.jpg'),
+  'The Lovers':          imgUrl('d/db/RWS_Tarot_06_Lovers.jpg',          'RWS_Tarot_06_Lovers.jpg'),
+  'The Chariot':         imgUrl('9/9b/RWS_Tarot_07_Chariot.jpg',         'RWS_Tarot_07_Chariot.jpg'),
+  'Strength':            imgUrl('f/f5/RWS_Tarot_08_Strength.jpg',        'RWS_Tarot_08_Strength.jpg'),
+  'The Hermit':          imgUrl('4/4d/RWS_Tarot_09_Hermit.jpg',          'RWS_Tarot_09_Hermit.jpg'),
+  'Wheel of Fortune':    imgUrl('3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg','RWS_Tarot_10_Wheel_of_Fortune.jpg'),
+  'Justice':             imgUrl('e/e0/RWS_Tarot_11_Justice.jpg',         'RWS_Tarot_11_Justice.jpg'),
+  'The Hanged Man':      imgUrl('2/2b/RWS_Tarot_12_Hanged_Man.jpg',      'RWS_Tarot_12_Hanged_Man.jpg'),
+  'Death':               imgUrl('d/d7/RWS_Tarot_13_Death.jpg',           'RWS_Tarot_13_Death.jpg'),
+  'Temperance':          imgUrl('f/f8/RWS_Tarot_14_Temperance.jpg',      'RWS_Tarot_14_Temperance.jpg'),
+  'The Devil':           imgUrl('5/55/RWS_Tarot_15_Devil.jpg',           'RWS_Tarot_15_Devil.jpg'),
+  'The Tower':           imgUrl('5/53/RWS_Tarot_16_Tower.jpg',           'RWS_Tarot_16_Tower.jpg'),
+  'The Star':            imgUrl('d/db/RWS_Tarot_17_Star.jpg',            'RWS_Tarot_17_Star.jpg'),
+  'The Moon':            imgUrl('7/7f/RWS_Tarot_18_Moon.jpg',            'RWS_Tarot_18_Moon.jpg'),
+  'The Sun':             imgUrl('1/17/RWS_Tarot_19_Sun.jpg',             'RWS_Tarot_19_Sun.jpg'),
+  'Judgement':           imgUrl('d/dd/RWS_Tarot_20_Judgement.jpg',       'RWS_Tarot_20_Judgement.jpg'),
+  'The World':           imgUrl('f/ff/RWS_Tarot_21_World.jpg',           'RWS_Tarot_21_World.jpg'),
   // Wands
-  'Ace of Wands':        `${WIKIMEDIA}/1/11/Wands01.jpg`,
-  'Two of Wands':        `${WIKIMEDIA}/0/0f/Wands02.jpg`,
-  'Three of Wands':      `${WIKIMEDIA}/f/ff/Wands03.jpg`,
-  'Four of Wands':       `${WIKIMEDIA}/a/a4/Wands04.jpg`,
-  'Five of Wands':       `${WIKIMEDIA}/9/9d/Wands05.jpg`,
-  'Six of Wands':        `${WIKIMEDIA}/3/3b/Wands06.jpg`,
-  'Seven of Wands':      `${WIKIMEDIA}/e/e4/Wands07.jpg`,
-  'Eight of Wands':      `${WIKIMEDIA}/6/6b/Wands08.jpg`,
-  'Nine of Wands':       `${WIKIMEDIA}/4/4d/Tarot_Nine_of_Wands.jpg`,
-  'Ten of Wands':        `${WIKIMEDIA}/0/0b/Wands10.jpg`,
-  'Page of Wands':       `${WIKIMEDIA}/6/6a/Wands11.jpg`,
-  'Knight of Wands':     `${WIKIMEDIA}/1/16/Wands12.jpg`,
-  'Queen of Wands':      `${WIKIMEDIA}/b/b0/Wands13.jpg`,
-  'King of Wands':       `${WIKIMEDIA}/c/ce/Wands14.jpg`,
+  'Ace of Wands':        imgUrl('1/11/Wands01.jpg',                      'Wands01.jpg'),
+  'Two of Wands':        imgUrl('0/0f/Wands02.jpg',                      'Wands02.jpg'),
+  'Three of Wands':      imgUrl('f/ff/Wands03.jpg',                      'Wands03.jpg'),
+  'Four of Wands':       imgUrl('a/a4/Wands04.jpg',                      'Wands04.jpg'),
+  'Five of Wands':       imgUrl('9/9d/Wands05.jpg',                      'Wands05.jpg'),
+  'Six of Wands':        imgUrl('3/3b/Wands06.jpg',                      'Wands06.jpg'),
+  'Seven of Wands':      imgUrl('e/e4/Wands07.jpg',                      'Wands07.jpg'),
+  'Eight of Wands':      imgUrl('6/6b/Wands08.jpg',                      'Wands08.jpg'),
+  'Nine of Wands':       imgUrl('4/4d/Tarot_Nine_of_Wands.jpg',          'Tarot_Nine_of_Wands.jpg'),
+  'Ten of Wands':        imgUrl('0/0b/Wands10.jpg',                      'Wands10.jpg'),
+  'Page of Wands':       imgUrl('6/6a/Wands11.jpg',                      'Wands11.jpg'),
+  'Knight of Wands':     imgUrl('1/16/Wands12.jpg',                      'Wands12.jpg'),
+  'Queen of Wands':      imgUrl('0/0d/Wands13.jpg',                      'Wands13.jpg'),
+  'King of Wands':       imgUrl('c/ce/Wands14.jpg',                      'Wands14.jpg'),
   // Cups
-  'Ace of Cups':         `${WIKIMEDIA}/3/36/Cups01.jpg`,
-  'Two of Cups':         `${WIKIMEDIA}/f/f8/Cups02.jpg`,
-  'Three of Cups':       `${WIKIMEDIA}/7/7a/Cups03.jpg`,
-  'Four of Cups':        `${WIKIMEDIA}/3/35/Cups04.jpg`,
-  'Five of Cups':        `${WIKIMEDIA}/d/d7/Cups05.jpg`,
-  'Six of Cups':         `${WIKIMEDIA}/1/17/Cups06.jpg`,
-  'Seven of Cups':       `${WIKIMEDIA}/a/ae/Cups07.jpg`,
-  'Eight of Cups':       `${WIKIMEDIA}/6/60/Cups08.jpg`,
-  'Nine of Cups':        `${WIKIMEDIA}/2/24/Cups09.jpg`,
-  'Ten of Cups':         `${WIKIMEDIA}/8/84/Cups10.jpg`,
-  'Page of Cups':        `${WIKIMEDIA}/a/ad/Cups11.jpg`,
-  'Knight of Cups':      `${WIKIMEDIA}/f/fa/Cups12.jpg`,
-  'Queen of Cups':       `${WIKIMEDIA}/6/62/Cups13.jpg`,
-  'King of Cups':        `${WIKIMEDIA}/0/04/Cups14.jpg`,
+  'Ace of Cups':         imgUrl('3/36/Cups01.jpg',                       'Cups01.jpg'),
+  'Two of Cups':         imgUrl('f/f8/Cups02.jpg',                       'Cups02.jpg'),
+  'Three of Cups':       imgUrl('7/7a/Cups03.jpg',                       'Cups03.jpg'),
+  'Four of Cups':        imgUrl('3/35/Cups04.jpg',                       'Cups04.jpg'),
+  'Five of Cups':        imgUrl('d/d7/Cups05.jpg',                       'Cups05.jpg'),
+  'Six of Cups':         imgUrl('1/17/Cups06.jpg',                       'Cups06.jpg'),
+  'Seven of Cups':       imgUrl('a/ae/Cups07.jpg',                       'Cups07.jpg'),
+  'Eight of Cups':       imgUrl('6/60/Cups08.jpg',                       'Cups08.jpg'),
+  'Nine of Cups':        imgUrl('2/24/Cups09.jpg',                       'Cups09.jpg'),
+  'Ten of Cups':         imgUrl('8/84/Cups10.jpg',                       'Cups10.jpg'),
+  'Page of Cups':        imgUrl('a/ad/Cups11.jpg',                       'Cups11.jpg'),
+  'Knight of Cups':      imgUrl('f/fa/Cups12.jpg',                       'Cups12.jpg'),
+  'Queen of Cups':       imgUrl('6/62/Cups13.jpg',                       'Cups13.jpg'),
+  'King of Cups':        imgUrl('0/04/Cups14.jpg',                       'Cups14.jpg'),
   // Swords
-  'Ace of Swords':       `${WIKIMEDIA}/1/1a/Swords01.jpg`,
-  'Two of Swords':       `${WIKIMEDIA}/9/9e/Swords02.jpg`,
-  'Three of Swords':     `${WIKIMEDIA}/0/02/Swords03.jpg`,
-  'Four of Swords':      `${WIKIMEDIA}/b/bf/Swords04.jpg`,
-  'Five of Swords':      `${WIKIMEDIA}/2/23/Swords05.jpg`,
-  'Six of Swords':       `${WIKIMEDIA}/2/29/Swords06.jpg`,
-  'Seven of Swords':     `${WIKIMEDIA}/3/34/Swords07.jpg`,
-  'Eight of Swords':     `${WIKIMEDIA}/a/a7/Swords08.jpg`,
-  'Nine of Swords':      `${WIKIMEDIA}/2/2f/Swords09.jpg`,
-  'Ten of Swords':       `${WIKIMEDIA}/d/d6/Swords10.jpg`,
-  'Page of Swords':      `${WIKIMEDIA}/4/4c/Swords11.jpg`,
-  'Knight of Swords':    `${WIKIMEDIA}/b/b0/Swords12.jpg`,
-  'Queen of Swords':     `${WIKIMEDIA}/d/d4/Swords13.jpg`,
-  'King of Swords':      `${WIKIMEDIA}/3/33/Swords14.jpg`,
+  'Ace of Swords':       imgUrl('1/1a/Swords01.jpg',                     'Swords01.jpg'),
+  'Two of Swords':       imgUrl('9/9e/Swords02.jpg',                     'Swords02.jpg'),
+  'Three of Swords':     imgUrl('0/02/Swords03.jpg',                     'Swords03.jpg'),
+  'Four of Swords':      imgUrl('b/bf/Swords04.jpg',                     'Swords04.jpg'),
+  'Five of Swords':      imgUrl('2/23/Swords05.jpg',                     'Swords05.jpg'),
+  'Six of Swords':       imgUrl('2/29/Swords06.jpg',                     'Swords06.jpg'),
+  'Seven of Swords':     imgUrl('3/34/Swords07.jpg',                     'Swords07.jpg'),
+  'Eight of Swords':     imgUrl('a/a7/Swords08.jpg',                     'Swords08.jpg'),
+  'Nine of Swords':      imgUrl('2/2f/Swords09.jpg',                     'Swords09.jpg'),
+  'Ten of Swords':       imgUrl('d/d4/Swords10.jpg',                     'Swords10.jpg'),
+  'Page of Swords':      imgUrl('4/4c/Swords11.jpg',                     'Swords11.jpg'),
+  'Knight of Swords':    imgUrl('b/b0/Swords12.jpg',                     'Swords12.jpg'),
+  'Queen of Swords':     imgUrl('d/d4/Swords13.jpg',                     'Swords13.jpg'),
+  'King of Swords':      imgUrl('3/33/Swords14.jpg',                     'Swords14.jpg'),
   // Pentacles
-  'Ace of Pentacles':    `${WIKIMEDIA}/f/fd/Pents01.jpg`,
-  'Two of Pentacles':    `${WIKIMEDIA}/9/9f/Pents02.jpg`,
-  'Three of Pentacles':  `${WIKIMEDIA}/4/42/Pents03.jpg`,
-  'Four of Pentacles':   `${WIKIMEDIA}/9/9a/Pents04.jpg`,
-  'Five of Pentacles':   `${WIKIMEDIA}/9/96/Pents05.jpg`,
-  'Six of Pentacles':    `${WIKIMEDIA}/a/a6/Pents06.jpg`,
-  'Seven of Pentacles':  `${WIKIMEDIA}/6/6a/Pents07.jpg`,
-  'Eight of Pentacles':  `${WIKIMEDIA}/4/49/Pents08.jpg`,
-  'Nine of Pentacles':   `${WIKIMEDIA}/f/f0/Pents09.jpg`,
-  'Ten of Pentacles':    `${WIKIMEDIA}/4/42/Pents10.jpg`,
-  'Page of Pentacles':   `${WIKIMEDIA}/e/ec/Pents11.jpg`,
-  'Knight of Pentacles': `${WIKIMEDIA}/d/d5/Pents12.jpg`,
-  'Queen of Pentacles':  `${WIKIMEDIA}/8/88/Pents13.jpg`,
-  'King of Pentacles':   `${WIKIMEDIA}/1/1c/Pents14.jpg`,
+  'Ace of Pentacles':    imgUrl('f/fd/Pents01.jpg',                      'Pents01.jpg'),
+  'Two of Pentacles':    imgUrl('9/9f/Pents02.jpg',                      'Pents02.jpg'),
+  'Three of Pentacles':  imgUrl('4/42/Pents03.jpg',                      'Pents03.jpg'),
+  'Four of Pentacles':   imgUrl('3/35/Pents04.jpg',                      'Pents04.jpg'),
+  'Five of Pentacles':   imgUrl('9/96/Pents05.jpg',                      'Pents05.jpg'),
+  'Six of Pentacles':    imgUrl('a/a6/Pents06.jpg',                      'Pents06.jpg'),
+  'Seven of Pentacles':  imgUrl('6/6a/Pents07.jpg',                      'Pents07.jpg'),
+  'Eight of Pentacles':  imgUrl('4/49/Pents08.jpg',                      'Pents08.jpg'),
+  'Nine of Pentacles':   imgUrl('f/f0/Pents09.jpg',                      'Pents09.jpg'),
+  'Ten of Pentacles':    imgUrl('4/42/Pents10.jpg',                      'Pents10.jpg'),
+  'Page of Pentacles':   imgUrl('e/ec/Pents11.jpg',                      'Pents11.jpg'),
+  'Knight of Pentacles': imgUrl('d/d5/Pents12.jpg',                      'Pents12.jpg'),
+  'Queen of Pentacles':  imgUrl('8/88/Pents13.jpg',                      'Pents13.jpg'),
+  'King of Pentacles':   imgUrl('1/1c/Pents14.jpg',                      'Pents14.jpg'),
 };
 
 const SUIT_OF = name => {
@@ -1056,81 +1082,14 @@ function dismissInstall() {
   document.getElementById('installBanner').classList.remove('visible');
 }
 
-// Register service worker (inline, via blob URL)
+// ─────────────────────────────────────────────
+// PWA — SERVICE WORKER REGISTRATION
+// ─────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  const SW_CODE = `
-const CACHE = 'tarot-v1';
-const ASSETS = [location.href];
-
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  // Cache-first for the app shell; network-first for Wikimedia images
-  if (url.hostname === 'upload.wikimedia.org') {
-    e.respondWith(
-      caches.open(CACHE).then(cache =>
-        cache.match(e.request).then(hit => {
-          if (hit) return hit;
-          return fetch(e.request).then(res => {
-            if (res.ok) cache.put(e.request, res.clone());
-            return res;
-          }).catch(() => hit || new Response('', { status: 404 }));
-        })
-      )
-    );
-  } else {
-    e.respondWith(
-      caches.match(e.request).then(hit => hit || fetch(e.request).catch(() =>
-        caches.match('/') || new Response('Offline', { status: 503 })
-      ))
-    );
-  }
-});
-`;
-
-  const blob = new Blob([SW_CODE], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-
-  navigator.serviceWorker.register(swUrl, { scope: './' })
-    .then(reg => console.log('SW registered', reg.scope))
-    .catch(err => console.warn('SW registration failed (expected if file:// protocol):', err));
+  navigator.serviceWorker.register('./sw.js', { scope: './' })
+    .then(reg => console.log('SW registered, scope:', reg.scope))
+    .catch(err => console.warn('SW registration failed:', err));
 }
-
-// ─────────────────────────────────────────────
-// PWA MANIFEST (injected dynamically)
-// ─────────────────────────────────────────────
-const manifest = {
-  name: 'Tarot · The Oracle\'s Table',
-  short_name: 'Tarot',
-  description: '78-card Rider-Waite-Smith tarot deck with full meanings',
-  start_url: '.',
-  display: 'standalone',
-  background_color: '#0c0a12',
-  theme_color: '#0c0a12',
-  icons: [
-    { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230c0a12"/><text y=".9em" font-size="80" x="10">✦</text></svg>', sizes: '192x192', type: 'image/svg+xml' },
-    { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230c0a12"/><text y=".9em" font-size="80" x="10">✦</text></svg>', sizes: '512x512', type: 'image/svg+xml' }
-  ]
-};
-const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-const manifestUrl = URL.createObjectURL(manifestBlob);
-const manifestLink = document.createElement('link');
-manifestLink.rel = 'manifest';
-manifestLink.href = manifestUrl;
-document.head.appendChild(manifestLink);
 </script>
 </body>
 </html>
